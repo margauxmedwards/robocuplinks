@@ -3,115 +3,291 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Spreadsheet Host + DIY Short Link QR</title>
+  <title>Spreadsheet Host + DIY Short Link & QR</title>
   <style>
-    body{font-family:Arial, sans-serif;margin:0;padding:20px;background:#f7f8fb;color:#333}
-    h1{margin-top:0}
-    iframe{width:100%;min-height:520px;border:0;border-radius:8px;background:#fff}
-    .row{display:flex;gap:20px;flex-wrap:wrap;margin-top:20px}
-    .card{background:#fff;padding:16px;border-radius:8px;flex:1;min-width:300px;box-shadow:0 2px 6px rgba(0,0,0,0.1)}
-    input,select,button{padding:8px 10px;border:1px solid #ccc;border-radius:6px;font-size:14px;width:100%}
-    label{margin-top:10px;display:block;font-weight:bold}
-    button{cursor:pointer;margin-top:10px}
-    .qrbox{border:1px dashed #ccc;min-height:200px;display:flex;align-items:center;justify-content:center;margin-top:10px}
+    :root{--ink:#0f172a;--muted:#475569;--bg:#f7f8fb;--card:#ffffff;--line:#e2e8f0;--accent:#16a34a}
+    *{box-sizing:border-box}
+    body{font-family:Inter,system-ui,Segoe UI,Arial,sans-serif;margin:0;background:var(--bg);color:var(--ink)}
+    header{padding:22px 20px}
+    h1{margin:0 0 6px}
+    p.lead{margin:0;color:var(--muted)}
+    .wrap{padding:20px;display:grid;gap:16px}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:0 6px 18px rgba(16,24,40,.06)}
+    .inner{padding:16px}
+    label{display:block;font-size:14px;color:var(--muted);margin-bottom:6px}
+    input[type="url"],input[type="text"],textarea,select{width:100%;padding:10px 12px;border-radius:10px;border:1px solid #d0d5dd;background:#fff}
+    .row{display:grid;grid-template-columns:1.2fr .8fr;gap:16px}
+    .inline{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+    button{background:#0f172a;color:#fff;border:none;border-radius:10px;padding:10px 12px;cursor:pointer}
+    button.secondary{background:#e5e7eb;color:#0f172a}
+    button.success{background:var(--accent)}
+    iframe{width:100%;min-height:520px;border:0;border-radius:12px;background:#f1f5f9}
+    .qrbox{border:1px dashed #cbd5e1;border-radius:12px;min-height:320px;display:grid;place-items:center;background:#fff}
+    .muted{color:var(--muted)}
+    .hint{font-size:12px;color:var(--muted)}
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
   </style>
 </head>
 <body>
-  <h1>Spreadsheet Host + DIY Short Link QR</h1>
-  <label for="sourceUrl">Spreadsheet share link</label>
-  <input id="sourceUrl" type="url" placeholder="OneDrive/SharePoint or Google Sheets link" />
-  <label><input id="viewOnly" type="checkbox" checked> Force view-only</label>
-  <button id="apply">Apply</button>
+  <header>
+    <h1>Spreadsheet Host + DIY Short Link & QR</h1>
+    <p class="lead">Platform‑agnostic viewer (Google Sheets or OneDrive/SharePoint) + make your own short links (no external service) and QR codes. Pre‑set for your GitHub Pages site.</p>
+  </header>
 
-  <div class="row">
-    <div class="card">
-      <iframe id="embedFrame"></iframe>
-    </div>
-    <div class="card">
-      <label for="baseUrl">Your site base URL</label>
-      <input id="baseUrl" type="url" placeholder="https://yourdomain.com" />
-      <label for="shortPath">Short path (file name without .html)</label>
-      <input id="shortPath" type="text" placeholder="mysheet" />
-      <button id="buildShort">Build redirect file + QR</button>
-      <div class="qrbox" id="qrcode">QR will appear here</div>
-      <label for="shortLink">Short link</label>
-      <input id="shortLink" type="url" readonly />
-      <button id="downloadQR">Download QR</button>
-    </div>
+  <div class="wrap">
+    <!-- VIEWER -->
+    <section class="card">
+      <div class="inner">
+        <label for="sourceUrl">Spreadsheet share link (Google Sheets or OneDrive/SharePoint)</label>
+        <input id="sourceUrl" type="url" placeholder="https://docs.google.com/spreadsheets/d/... OR https://onedrive.live.com/embed?..." />
+        <div class="inline" style="margin-top:8px">
+          <label class="inline"><input id="viewOnly" type="checkbox" checked style="margin-right:6px"/> Force view‑only (removes editing flags)</label>
+          <select id="size">
+            <option value="520">Tall</option>
+            <option value="660">Extra Tall</option>
+            <option value="420">Compact</option>
+          </select>
+          <div class="btns">
+            <button id="apply" class="success">Apply to viewer</button>
+          </div>
+        </div>
+        <p class="hint" style="margin-top:8px">For no sign‑in viewing: Google Sheets → <em>File → Share → Publish to web</em>; OneDrive/SharePoint → share as <em>Anyone with the link can view</em>.</p>
+      </div>
+    </section>
+
+    <section class="row">
+      <div class="card">
+        <div class="inner">
+          <iframe id="embedFrame" title="Spreadsheet viewer"></iframe>
+        </div>
+      </div>
+
+      <!-- SHORT LINK + QR -->
+      <div class="card">
+        <div class="inner">
+          <h3 style="margin:0 0 8px">DIY Short Link & QR</h3>
+          <div class="grid2">
+            <div>
+              <label for="baseUrl">Your site base URL</label>
+              <input id="baseUrl" type="url" placeholder="https://<user>.github.io/<repo>" />
+            </div>
+            <div>
+              <label for="shortPath">Short path (file or path/name)</label>
+              <input id="shortPath" type="text" placeholder="r/maze" />
+            </div>
+          </div>
+          <div class="btns">
+            <button id="buildShort" class="success">Build redirect file + QR</button>
+            <button id="downloadQR" class="secondary">Download QR</button>
+          </div>
+          <div class="qrbox" style="margin-top:10px"><div id="qrcode">QR will appear here</div></div>
+          <div style="margin-top:10px"><label>Short link</label><input id="shortLink" type="url" readonly/></div>
+          <p class="hint" style="margin-top:8px">This makes a small HTML file that redirects to your long spreadsheet URL. Upload it to the matching path on your site, then use the short link + QR.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- QUICK SLUGS + BULK ZIP -->
+    <section class="card">
+      <div class="inner">
+        <h3 style="margin:0 0 8px">Quick‑create popular RCJQ links</h3>
+        <div class="btns">
+          <button class="secondary" data-quick="r/line">Create /r/line</button>
+          <button class="secondary" data-quick="r/soccer">Create /r/soccer</button>
+          <button class="secondary" data-quick="r/maze">Create /r/maze</button>
+        </div>
+        <details style="margin-top:10px">
+          <summary><strong>Build a ZIP of multiple redirect files</strong></summary>
+          <label for="bulkSlugs" style="margin-top:8px">Slugs (one per line, no .html)</label>
+          <textarea id="bulkSlugs" rows="6" placeholder="r/line
+r/soccer
+r/maze
+r/onstage"></textarea>
+          <div class="btns">
+            <button id="bulkZip" class="success">Download ZIP of redirects</button>
+          </div>
+          <p class="hint">The ZIP will contain <code>slug.html</code> files for each entry, pointing at the current spreadsheet link.</p>
+        </details>
+      </div>
+    </section>
   </div>
 
+  <!-- QR + ZIP libs -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script>
-    const srcInput = document.getElementById('sourceUrl');
-    const frame = document.getElementById('embedFrame');
-    const viewOnly = document.getElementById('viewOnly');
-    const baseUrl = document.getElementById('baseUrl');
-    const shortPath = document.getElementById('shortPath');
-    const shortLinkInput = document.getElementById('shortLink');
-    const qrWrap = document.getElementById('qrcode');
-    let qrcode = null;
+    // Elements
+    var srcInput = document.getElementById('sourceUrl');
+    var frame = document.getElementById('embedFrame');
+    var viewOnly = document.getElementById('viewOnly');
+    var sizeSel = document.getElementById('size');
+    var baseUrlEl = document.getElementById('baseUrl');
+    var shortPathEl = document.getElementById('shortPath');
+    var shortLinkInput = document.getElementById('shortLink');
+    var qrWrap = document.getElementById('qrcode');
 
-    function normalizeLink(url, forceView){
-      try{
-        const u = new URL(url);
-        if(u.hostname.includes('docs.google.com') && u.pathname.includes('/spreadsheets/')){
-          const id = u.pathname.split('/d/')[1]?.split('/')[0];
-          if(id) return `https://docs.google.com/spreadsheets/d/${id}/preview?rm=minimal`;
-        }
-        if(forceView && u.hostname.includes('onedrive.live.com')){
-          u.searchParams.delete('AllowTyping');
-          return u.toString();
-        }
-        return url;
-      }catch{return url;}
+    var qrcode = null;
+
+    // Provider helpers
+    function isGoogleSheets(u){ return /(^|\.)docs\.google\.com$/.test(u.hostname) && u.pathname.indexOf('/spreadsheets/') !== -1; }
+    function isOneDrive(u){ return u.hostname.indexOf('onedrive.live.com') !== -1; }
+    function isSharePoint(u){ return u.hostname.indexOf('sharepoint.com') !== -1; }
+
+    function stripParam(urlStr, param){
+      try{ var u = new URL(urlStr); u.searchParams.delete(param); return u.toString(); }catch(e){ return urlStr; }
     }
 
-    function setIframe(src){
-      frame.src = src;
+    function normalizeGoogle(u){
+      // Try to extract ID and use preview (minimal UI)
+      var parts = u.pathname.split('/d/');
+      if(parts.length > 1){
+        var id = parts[1].split('/')[0];
+        if(id){ return 'https://docs.google.com/spreadsheets/d/' + id + '/preview?rm=minimal'; }
+      }
+      if(u.pathname.indexOf('/pubhtml') !== -1) return u.href; // already published
+      return u.href;
     }
+
+    function normalizeOneDrive(u, forceView){
+      var out = u.href;
+      if(forceView) out = stripParam(out, 'AllowTyping');
+      return out;
+    }
+
+    function normalizeSharePoint(u, forceView){
+      var uu = new URL(u.href);
+      uu.searchParams.set('action','embedview');
+      if(forceView) uu.searchParams.delete('AllowTyping');
+      return uu.toString();
+    }
+
+    function normalizeLink(input, forceView){
+      var u; try{ u = new URL(input); }catch(e){ return null; }
+      if(isGoogleSheets(u)) return normalizeGoogle(u);
+      if(isOneDrive(u)) return normalizeOneDrive(u, forceView);
+      if(isSharePoint(u)) return normalizeSharePoint(u, forceView);
+      return u.href;
+    }
+
+    function setIframe(src){ frame.src = src; frame.style.minHeight = sizeSel.value + 'px'; }
 
     function makeQR(url){
+      if(!url) return;
       qrWrap.innerHTML = '';
-      qrcode = new QRCode(qrWrap, { text: url, width: 200, height: 200 });
+      try{
+        if(typeof QRCode === 'undefined'){
+          var img = document.createElement('img');
+          img.alt = 'QR'; img.width = 320; img.height = 320;
+          img.src = 'https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=' + encodeURIComponent(url);
+          qrWrap.appendChild(img);
+          qrcode = { __img: img };
+          return;
+        }
+        qrcode = new QRCode(qrWrap, { text: url, width: 320, height: 320, correctLevel: QRCode.CorrectLevel.M });
+      }catch(err){ console.error('QR generation error', err); alert('Could not generate QR.'); }
+    }
+
+    function saveBlob(filename, blob){
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+    }
+
+    function composeShortUrl(base, path){
+      base = (base || '').trim().replace(/\/$/, '');
+      path = (path || '').trim().replace(/^\//, '');
+      if(!base || !path) return null;
+      var file = path.match(/\.html$/) ? path : path + '.html';
+      return base + '/' + file;
     }
 
     function generateRedirectHTML(targetUrl){
-      const esc = targetUrl.replace(/&/g,'&amp;').replace(/"/g,'&quot;');
-      return "<!doctype html><html><head><meta charset='utf-8'><meta http-equiv='refresh' content='0;url="+esc+"'><title>Redirecting...</title></head><body><script>location.replace('"+esc+"');</"+"script></body></html>";
+      var esc = (targetUrl || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      // Plain strings to avoid template literal issues
+      var head = "<!doctype html><html lang='en'><head><meta charset='utf-8'><meta http-equiv='refresh' content='0; url=" + esc + "'><meta name='robots' content='noindex'><link rel='canonical' href='" + esc + "'><title>Redirecting…</title></head><body>";
+      var noscript = "<noscript><a href='" + esc + "'>Continue</a></noscript>";
+      var script = "<script>location.replace(\"" + esc + "\");</" + "script>";
+      return head + noscript + script + '</body></html>';
     }
 
-    function download(filename, text){
-      const blob = new Blob([text], {type:'text/html'});
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = filename;
-      a.click();
-      URL.revokeObjectURL(a.href);
+    function buildAndDownloadRedirect(shortPath){
+      var src = normalizeLink(srcInput.value.trim(), viewOnly.checked);
+      if(!src){ alert('Enter a valid spreadsheet link first.'); return; }
+      var base = baseUrlEl.value;
+      var shortUrl = composeShortUrl(base, shortPath);
+      if(!shortUrl){ alert('Enter your site base URL and a short path'); return; }
+      shortLinkInput.value = shortUrl;
+      makeQR(shortUrl);
+      var filename = shortPath.split('/').pop();
+      if(!/\.html$/.test(filename)) filename += '.html';
+      var html = generateRedirectHTML(src);
+      var blob = new Blob([html], {type:'text/html'});
+      saveBlob(filename, blob);
     }
 
-    document.getElementById('apply').onclick = () => {
-      const src = normalizeLink(srcInput.value.trim(), viewOnly.checked);
+    // UI handlers
+    document.getElementById('apply').onclick = function(){
+      var src = normalizeLink(srcInput.value.trim(), viewOnly.checked);
+      if(!src){ alert('Enter a valid link'); return; }
       setIframe(src);
     };
 
-    document.getElementById('buildShort').onclick = () => {
-      const src = normalizeLink(srcInput.value.trim(), viewOnly.checked);
-      const shortUrl = baseUrl.value.replace(/\/$/, '') + '/' + shortPath.value.replace(/^\//, '') + '.html';
-      shortLinkInput.value = shortUrl;
-      makeQR(shortUrl);
-      const html = generateRedirectHTML(src);
-      download(shortPath.value + '.html', html);
+    document.getElementById('downloadQR').onclick = function(){
+      if(!qrcode) return;
+      var img = qrWrap.querySelector('img') || qrWrap.querySelector('canvas');
+      if(!img) return;
+      var link = document.createElement('a');
+      link.download = 'sheet-qr.png';
+      link.href = img.src || img.toDataURL('image/png');
+      link.click();
     };
 
-    document.getElementById('downloadQR').onclick = () => {
-      if(!qrcode) return;
-      const img = qrWrap.querySelector('img') || qrWrap.querySelector('canvas');
-      if(!img) return;
-      const a = document.createElement('a');
-      a.download = 'sheet-qr.png';
-      a.href = img.src || img.toDataURL('image/png');
-      a.click();
+    document.getElementById('buildShort').onclick = function(){
+      buildAndDownloadRedirect(shortPathEl.value);
     };
+
+    // Quick buttons
+    var quickBtns = document.querySelectorAll('[data-quick]');
+    for(var i=0;i<quickBtns.length;i++){
+      quickBtns[i].onclick = function(){ buildAndDownloadRedirect(this.getAttribute('data-quick')); };
+    }
+
+    // Bulk ZIP
+    document.getElementById('bulkZip').onclick = function(){
+      var src = normalizeLink(srcInput.value.trim(), viewOnly.checked);
+      if(!src){ alert('Enter a valid spreadsheet link first'); return; }
+      var base = baseUrlEl.value;
+      var slugsRaw = document.getElementById('bulkSlugs').value || '';
+      var lines = slugsRaw.split(/\r?\n/).map(function(s){ return s.trim(); }).filter(function(s){ return s.length>0; });
+      if(lines.length === 0){ alert('Add at least one slug'); return; }
+      var zip = new JSZip();
+      for(var j=0;j<lines.length;j++){
+        var slug = lines[j];
+        var shortUrl = composeShortUrl(base, slug);
+        if(!shortUrl) { continue; }
+        var html = generateRedirectHTML(src);
+        var name = slug.split('/').pop();
+        if(!/\.html$/.test(name)) name += '.html';
+        zip.file(name, html);
+      }
+      zip.generateAsync({type:'blob'}).then(function(content){ saveBlob('redirects.zip', content); });
+    };
+
+    sizeSel.onchange = function(){ var src = frame.src; if(src) setIframe(src); };
+
+    // Init presets for your site
+    (function init(){
+      // Prefill to your GitHub Pages site
+      baseUrlEl.value = 'https://margauxmedwards.github.io/robocuplinks';
+      // If page opened with ?src=, auto-load viewer
+      var p = new URLSearchParams(location.search);
+      var src = p.get('src');
+      if(src){ srcInput.value = src; setIframe(src); }
+    })();
   </script>
 </body>
 </html>
