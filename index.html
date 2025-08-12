@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Spreadsheet Host + DIY Short Link & QR</title>
+  <title>Link Host + DIY Short Link & QR</title>
   <style>
     :root{--ink:#0f172a;--muted:#475569;--bg:#f7f8fb;--card:#ffffff;--line:#e2e8f0;--accent:#16a34a}
     *{box-sizing:border-box}
@@ -27,22 +27,22 @@
     .muted{color:var(--muted)}
     .hint{font-size:12px;color:var(--muted)}
     .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .small{font-size:12px}
   </style>
 </head>
 <body>
   <header>
-    <h1>Spreadsheet Host + DIY Short Link & QR</h1>
-    <p class="lead">Platform‑agnostic viewer (Google Sheets or OneDrive/SharePoint) + make your own short links (no external service) and QR codes. Pre‑set for your GitHub Pages site.</p>
+    <h1>Link Host + DIY Short Link & QR</h1>
+    <p class="lead">Paste any URL to preview (if embeddable), generate a QR, and create copy‑paste redirect code for your own short link. Default host is your GitHub Pages; you can change & save a new default.</p>
   </header>
 
   <div class="wrap">
     <!-- VIEWER -->
     <section class="card">
       <div class="inner">
-        <label for="sourceUrl">Spreadsheet share link (Google Sheets or OneDrive/SharePoint)</label>
-        <input id="sourceUrl" type="url" placeholder="https://docs.google.com/spreadsheets/d/... OR https://onedrive.live.com/embed?..." />
+        <label for="sourceUrl">Target link (any URL)</label>
+        <input id="sourceUrl" type="url" placeholder="https://example.com/anything" />
         <div class="inline" style="margin-top:8px">
-          <label class="inline"><input id="viewOnly" type="checkbox" checked style="margin-right:6px"/> Force view‑only (removes editing flags)</label>
           <select id="size">
             <option value="520">Tall</option>
             <option value="660">Extra Tall</option>
@@ -50,16 +50,17 @@
           </select>
           <div class="btns">
             <button id="apply" class="success">Apply to viewer</button>
+            <button id="openExt" class="secondary">Open in new tab</button>
           </div>
         </div>
-        <p class="hint" style="margin-top:8px">For no sign‑in viewing: Google Sheets → <em>File → Share → Publish to web</em>; OneDrive/SharePoint → share as <em>Anyone with the link can view</em>.</p>
+        <p class="hint" style="margin-top:8px">Note: Some sites block embedding in iframes. If the preview fails, use “Open in new tab.”</p>
       </div>
     </section>
 
     <section class="row">
       <div class="card">
         <div class="inner">
-          <iframe id="embedFrame" title="Spreadsheet viewer"></iframe>
+          <iframe id="embedFrame" title="Link viewer"></iframe>
         </div>
       </div>
 
@@ -69,21 +70,38 @@
           <h3 style="margin:0 0 8px">DIY Short Link & QR</h3>
           <div class="grid2">
             <div>
-              <label for="baseUrl">Your site base URL</label>
-              <input id="baseUrl" type="url" placeholder="https://<user>.github.io/<repo>" />
+              <label for="baseUrl">Host base URL</label>
+              <input id="baseUrl" type="url" placeholder="https://<host>/[optional-subpath]" />
+              <p class="small muted">Default: <code>https://margauxmedwards.github.io/robocuplinks</code> (change below to save your own)</p>
             </div>
             <div>
-              <label for="shortPath">Short path (file or path/name)</label>
+              <label for="shortPath">Short path</label>
               <input id="shortPath" type="text" placeholder="r/maze" />
             </div>
           </div>
-          <div class="btns">
-            <button id="buildShort" class="success">Build redirect file + QR</button>
+          <div class="inline" style="margin-top:8px">
+            <label class="inline"><input id="prettyUrl" type="checkbox" style="margin-right:6px"/> Pretty URL (folder index): <span class="small muted">…/slug/</span></label>
+            <div class="btns">
+              <button id="saveDefaultHost" class="secondary">Save as default host</button>
+              <button id="resetDefaultHost" class="secondary">Reset to GitHub default</button>
+            </div>
+          </div>
+          <div class="btns" style="margin-top:8px">
+            <button id="buildShort" class="success">Generate code + QR</button>
+            <button id="openShort" class="secondary">Open short link</button>
             <button id="downloadQR" class="secondary">Download QR</button>
           </div>
           <div class="qrbox" style="margin-top:10px"><div id="qrcode">QR will appear here</div></div>
           <div style="margin-top:10px"><label>Short link</label><input id="shortLink" type="url" readonly/></div>
-          <p class="hint" style="margin-top:8px">This makes a small HTML file that redirects to your long spreadsheet URL. Upload it to the matching path on your site, then use the short link + QR.</p>
+          <div style="margin-top:8px" class="small muted" id="placementHint"></div>
+          <div style="margin-top:10px">
+            <label>Redirect HTML (copy & paste)</label>
+            <textarea id="redirectCode" rows="10" readonly></textarea>
+            <div class="btns">
+              <button id="copyCode" class="secondary">Copy code</button>
+            </div>
+          </div>
+          <p class="hint" style="margin-top:8px">This makes a tiny HTML file that redirects to your target link. Upload it to the path shown above, then use the short link + QR.</p>
         </div>
       </div>
     </section>
@@ -107,7 +125,7 @@ r/onstage"></textarea>
           <div class="btns">
             <button id="bulkZip" class="success">Download ZIP of redirects</button>
           </div>
-          <p class="hint">The ZIP will contain <code>slug.html</code> files for each entry, pointing at the current spreadsheet link.</p>
+          <p class="hint">The ZIP will contain redirect files for each entry, pointing at the current link. Folder vs file naming follows the “Pretty URL” setting.</p>
         </details>
       </div>
     </section>
@@ -120,54 +138,22 @@ r/onstage"></textarea>
     // Elements
     var srcInput = document.getElementById('sourceUrl');
     var frame = document.getElementById('embedFrame');
-    var viewOnly = document.getElementById('viewOnly');
     var sizeSel = document.getElementById('size');
     var baseUrlEl = document.getElementById('baseUrl');
     var shortPathEl = document.getElementById('shortPath');
+    var prettyEl = document.getElementById('prettyUrl');
     var shortLinkInput = document.getElementById('shortLink');
+    var placementHintEl = document.getElementById('placementHint');
+    var redirectCodeEl = document.getElementById('redirectCode');
     var qrWrap = document.getElementById('qrcode');
 
     var qrcode = null;
+    var LS_KEY = 'shortlink_base_url_v1';
 
-    // Provider helpers
-    function isGoogleSheets(u){ return /(^|\.)docs\.google\.com$/.test(u.hostname) && u.pathname.indexOf('/spreadsheets/') !== -1; }
-    function isOneDrive(u){ return u.hostname.indexOf('onedrive.live.com') !== -1; }
-    function isSharePoint(u){ return u.hostname.indexOf('sharepoint.com') !== -1; }
-
-    function stripParam(urlStr, param){
-      try{ var u = new URL(urlStr); u.searchParams.delete(param); return u.toString(); }catch(e){ return urlStr; }
-    }
-
-    function normalizeGoogle(u){
-      // Try to extract ID and use preview (minimal UI)
-      var parts = u.pathname.split('/d/');
-      if(parts.length > 1){
-        var id = parts[1].split('/')[0];
-        if(id){ return 'https://docs.google.com/spreadsheets/d/' + id + '/preview?rm=minimal'; }
-      }
-      if(u.pathname.indexOf('/pubhtml') !== -1) return u.href; // already published
-      return u.href;
-    }
-
-    function normalizeOneDrive(u, forceView){
-      var out = u.href;
-      if(forceView) out = stripParam(out, 'AllowTyping');
-      return out;
-    }
-
-    function normalizeSharePoint(u, forceView){
-      var uu = new URL(u.href);
-      uu.searchParams.set('action','embedview');
-      if(forceView) uu.searchParams.delete('AllowTyping');
-      return uu.toString();
-    }
-
-    function normalizeLink(input, forceView){
-      var u; try{ u = new URL(input); }catch(e){ return null; }
-      if(isGoogleSheets(u)) return normalizeGoogle(u);
-      if(isOneDrive(u)) return normalizeOneDrive(u, forceView);
-      if(isSharePoint(u)) return normalizeSharePoint(u, forceView);
-      return u.href;
+    // Link helpers
+    function cleanLink(input){
+      var s = (input || '').trim();
+      try { var u = new URL(s); return u.href; } catch(e){ return null; }
     }
 
     function setIframe(src){ frame.src = src; frame.style.minHeight = sizeSel.value + 'px'; }
@@ -197,96 +183,156 @@ r/onstage"></textarea>
       setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 1500);
     }
 
-    function composeShortUrl(base, path){
+    function composeShortUrl(base, path, pretty){
       base = (base || '').trim().replace(/\/$/, '');
       path = (path || '').trim().replace(/^\//, '');
       if(!base || !path) return null;
-      var file = path.match(/\.html$/) ? path : path + '.html';
+      if(pretty){
+        return base + '/' + path.replace(/\/$/, '') + '/';
+      }
+      var file = /\.html$/i.test(path) ? path : path + '.html';
       return base + '/' + file;
     }
 
     function generateRedirectHTML(targetUrl){
       var esc = (targetUrl || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-      // Plain strings to avoid template literal issues
       var head = "<!doctype html><html lang='en'><head><meta charset='utf-8'><meta http-equiv='refresh' content='0; url=" + esc + "'><meta name='robots' content='noindex'><link rel='canonical' href='" + esc + "'><title>Redirecting…</title></head><body>";
       var noscript = "<noscript><a href='" + esc + "'>Continue</a></noscript>";
       var script = "<script>location.replace(\"" + esc + "\");</" + "script>";
       return head + noscript + script + '</body></html>';
     }
 
-    function buildAndDownloadRedirect(shortPath){
-      var src = normalizeLink(srcInput.value.trim(), viewOnly.checked);
-      if(!src){ alert('Enter a valid spreadsheet link first.'); return; }
-      var base = baseUrlEl.value;
-      var shortUrl = composeShortUrl(base, shortPath);
-      if(!shortUrl){ alert('Enter your site base URL and a short path'); return; }
-      shortLinkInput.value = shortUrl;
-      makeQR(shortUrl);
-      var filename = shortPath.split('/').pop();
-      if(!/\.html$/.test(filename)) filename += '.html';
+    function updatePlacementHint(base, path, pretty){
+      if(!base || !path){ placementHintEl.textContent = ''; return; }
+      base = base.replace(/\/$/, ''); path = path.replace(/^\//, '').replace(/\/$/, '');
+      if(pretty){
+        placementHintEl.textContent = 'Upload as ' + base + '/' + path + '/index.html';
+      } else {
+        var file = /\.html$/i.test(path) ? path : path + '.html';
+        placementHintEl.textContent = 'Upload as ' + base + '/' + file;
+      }
+    }
+
+    function buildAndShow(shortPath){
+      var src = cleanLink(srcInput.value.trim());
+      if(!src){ alert('Enter a valid link first.'); return; }
+      var base = baseUrlEl.value; var pretty = !!prettyEl.checked;
+      var shortUrl = composeShortUrl(base, shortPath, pretty);
+      if(!shortUrl){ alert('Enter your host base URL and a short path'); return; }
+      shortLinkInput.value = shortUrl; makeQR(shortUrl);
+      updatePlacementHint(base, shortPath, pretty);
       var html = generateRedirectHTML(src);
-      var blob = new Blob([html], {type:'text/html'});
-      saveBlob(filename, blob);
+      if(redirectCodeEl){ redirectCodeEl.value = html; redirectCodeEl.scrollTop = 0; }
     }
 
     // UI handlers
     document.getElementById('apply').onclick = function(){
-      var src = normalizeLink(srcInput.value.trim(), viewOnly.checked);
+      var src = cleanLink(srcInput.value.trim());
       if(!src){ alert('Enter a valid link'); return; }
       setIframe(src);
     };
+    var openBtn = document.getElementById('openExt');
+    if(openBtn){
+      openBtn.onclick = function(){
+        var src = cleanLink(srcInput.value.trim());
+        if(!src){ alert('Enter a valid link'); return; }
+        window.open(src, '_blank', 'noopener');
+      };
+    }
 
     document.getElementById('downloadQR').onclick = function(){
       if(!qrcode) return;
       var img = qrWrap.querySelector('img') || qrWrap.querySelector('canvas');
       if(!img) return;
       var link = document.createElement('a');
-      link.download = 'sheet-qr.png';
+      link.download = 'link-qr.png';
       link.href = img.src || img.toDataURL('image/png');
       link.click();
     };
 
     document.getElementById('buildShort').onclick = function(){
-      buildAndDownloadRedirect(shortPathEl.value);
+      buildAndShow(shortPathEl.value);
     };
+
+    var openShortBtn = document.getElementById('openShort');
+    if(openShortBtn){
+      openShortBtn.onclick = function(){ var u = shortLinkInput.value.trim(); if(u) window.open(u, '_blank', 'noopener'); };
+    }
 
     // Quick buttons
     var quickBtns = document.querySelectorAll('[data-quick]');
     for(var i=0;i<quickBtns.length;i++){
-      quickBtns[i].onclick = function(){ buildAndDownloadRedirect(this.getAttribute('data-quick')); };
+      quickBtns[i].onclick = function(){ buildAndShow(this.getAttribute('data-quick')); };
     }
 
-    // Bulk ZIP
+    // Bulk ZIP (respects Pretty URL setting)
     document.getElementById('bulkZip').onclick = function(){
-      var src = normalizeLink(srcInput.value.trim(), viewOnly.checked);
-      if(!src){ alert('Enter a valid spreadsheet link first'); return; }
-      var base = baseUrlEl.value;
+      var src = cleanLink(srcInput.value.trim());
+      if(!src){ alert('Enter a valid link first'); return; }
+      var base = baseUrlEl.value; var pretty = !!prettyEl.checked;
       var slugsRaw = document.getElementById('bulkSlugs').value || '';
       var lines = slugsRaw.split(/\r?\n/).map(function(s){ return s.trim(); }).filter(function(s){ return s.length>0; });
       if(lines.length === 0){ alert('Add at least one slug'); return; }
       var zip = new JSZip();
+      var html = generateRedirectHTML(src);
       for(var j=0;j<lines.length;j++){
-        var slug = lines[j];
-        var shortUrl = composeShortUrl(base, slug);
-        if(!shortUrl) { continue; }
-        var html = generateRedirectHTML(src);
-        var name = slug.split('/').pop();
-        if(!/\.html$/.test(name)) name += '.html';
-        zip.file(name, html);
+        var slug = lines[j].replace(/^\//,'').replace(/\/$/,'');
+        if(pretty){
+          zip.file(slug + '/index.html', html);
+        } else {
+          var name = /\.html$/i.test(slug) ? slug : slug + '.html';
+          zip.file(name, html);
+        }
       }
       zip.generateAsync({type:'blob'}).then(function(content){ saveBlob('redirects.zip', content); });
     };
 
     sizeSel.onchange = function(){ var src = frame.src; if(src) setIframe(src); };
 
-    // Init presets for your site
-    (function init(){
-      // Prefill to your GitHub Pages site
+    // Copy code handler
+    document.getElementById('copyCode').onclick = function(){
+      if(!redirectCodeEl || !redirectCodeEl.value){ alert('Nothing to copy yet. Click "Generate code + QR" first.'); return; }
+      try{
+        navigator.clipboard.writeText(redirectCodeEl.value).then(function(){
+          alert('Code copied to clipboard');
+        }).catch(function(){
+          if(redirectCodeEl.select){ redirectCodeEl.select(); }
+          if(document.execCommand){ document.execCommand('copy'); }
+          alert('Code copied');
+        });
+      }catch(e){
+        if(redirectCodeEl.select){ redirectCodeEl.select(); }
+        alert('Select the text and press Ctrl/Cmd+C to copy.');
+      }
+    };
+
+    // Default host persistence
+    document.getElementById('saveDefaultHost').onclick = function(){
+      var val = baseUrlEl.value.trim();
+      if(!val){ alert('Enter a host base URL first.'); return; }
+      try{ new URL(val); }catch(e){ alert('Enter a valid URL (including https://)'); return; }
+      localStorage.setItem(LS_KEY, val);
+      alert('Saved as default host.');
+    };
+    document.getElementById('resetDefaultHost').onclick = function(){
+      localStorage.removeItem(LS_KEY);
       baseUrlEl.value = 'https://margauxmedwards.github.io/robocuplinks';
-      // If page opened with ?src=, auto-load viewer
+      alert('Reset to GitHub default.');
+    };
+
+    (function init(){
+      // Default to saved host, then query ?base= override, else GitHub default
+      var saved = localStorage.getItem(LS_KEY);
+      var def = 'https://margauxmedwards.github.io/robocuplinks';
       var p = new URLSearchParams(location.search);
+      var baseOverride = p.get('base');
+      baseUrlEl.value = baseOverride || saved || def;
+      // If page opened with ?src=, auto-load viewer
       var src = p.get('src');
-      if(src){ srcInput.value = src; setIframe(src); }
+      if(src){ srcInput.value = src; var clean = cleanLink(src); if(clean) setIframe(clean); }
+      // Pretty URL override
+      var prettyParam = p.get('pretty');
+      if(prettyParam !== null){ prettyEl.checked = (prettyParam === '1' || prettyParam === 'true'); }
     })();
   </script>
 </body>
