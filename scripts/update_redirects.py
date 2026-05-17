@@ -56,18 +56,23 @@ def make_qr_image(short_url: str, caption: str) -> Image.Image:
     qr_size = 360
     qr_image = qr_image.resize((qr_size, qr_size), Image.Resampling.NEAREST)
 
-    font = ImageFont.load_default()
+    font = ImageFont.load_default(size=18)
     padding = 18
-    text_height = 18
-    canvas_width = qr_size + (padding * 2)
+    text_height = 22
+
+    # Measure text before creating canvas so width can accommodate it
+    tmp_draw = ImageDraw.Draw(Image.new("RGB", (1, 1)))
+    text_bbox = tmp_draw.textbbox((0, 0), caption, font=font)
+    text_width = text_bbox[2] - text_bbox[0]
+
+    canvas_width = max(qr_size + (padding * 2), text_width + (padding * 2))
     canvas_height = qr_size + text_height + (padding * 3)
     canvas = Image.new("RGB", (canvas_width, canvas_height), "white")
-    canvas.paste(qr_image, (padding, padding))
+    qr_x = (canvas_width - qr_size) // 2
+    canvas.paste(qr_image, (qr_x, padding))
 
     draw = ImageDraw.Draw(canvas)
-    text_bbox = draw.textbbox((0, 0), caption, font=font)
-    text_width = text_bbox[2] - text_bbox[0]
-    text_x = max((canvas_width - text_width) // 2, padding)
+    text_x = (canvas_width - text_width) // 2
     text_y = qr_size + (padding * 2)
     draw.text((text_x, text_y), caption, fill="black", font=font)
     return canvas
