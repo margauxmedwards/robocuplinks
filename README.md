@@ -19,6 +19,7 @@ These paths are reused for every event and overwritten with the latest URLs:
 - `r/sumo.html`
 
 Because links are stable, QR codes for these paths can stay the same across events.
+Existing QR PNG files are treated as long-lived assets and are not regenerated during normal event updates; only the redirect targets change underneath them.
 
 ## Event update workflow
 
@@ -35,4 +36,10 @@ Useful commands:
 ```bash
 pixi run python scripts/apply_event_from_issue.py --issue-body issue-body.md --redirects redirects.json
 pixi run update-redirects
+```
+
+If you ever need to intentionally rebuild the QR images, run:
+
+```bash
+pixi run python scripts/update_redirects.py --config redirects.json --refresh-qr
 ```

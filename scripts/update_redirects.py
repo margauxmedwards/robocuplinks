@@ -131,6 +131,7 @@ def write_qr_files(
     redirects: Dict[str, str],
     short_base_url: str,
     qr_dir: str,
+    refresh_existing: bool,
 ) -> Tuple[int, Set[Path]]:
     updates = 0
     expected_paths: Set[Path] = set()
@@ -140,10 +141,12 @@ def write_qr_files(
         short_url = compose_short_url(short_base_url, relative_path)
         output_path = qr_output_path_for_html(repo_root, qr_dir, relative_path)
         output_path.parent.mkdir(parents=True, exist_ok=True)
-
-        image = make_qr_image(short_url=short_url, caption=short_url)
         expected_paths.add(output_path.resolve())
 
+        if output_path.exists() and not refresh_existing:
+            continue
+
+        image = make_qr_image(short_url=short_url, caption=short_url)
         current_bytes = output_path.read_bytes() if output_path.exists() else None
         with output_path.open("wb") as handle:
             image.save(handle, format="PNG")
@@ -210,6 +213,11 @@ def main() -> None:
         default="qr",
         help="Directory for generated QR image files",
     )
+    parser.add_argument(
+        "--refresh-qr",
+        action="store_true",
+        help="Regenerate QR PNGs even if they already exist.",
+    )
     args = parser.parse_args()
 
     repo_root = Path.cwd()
@@ -221,6 +229,7 @@ def main() -> None:
         redirects=redirects,
         short_base_url=args.short_base_url,
         qr_dir=args.qr_dir,
+        refresh_existing=args.refresh_qr,
     )
     redirect_removed_count = prune_stale_redirect_files(repo_root, redirects)
     qr_removed_count = prune_stale_qr_files(repo_root, args.qr_dir, expected_qr_paths)
