@@ -295,11 +295,21 @@
         <div class="card-icon green">🔗</div>
         <div>
           <div class="card-title">Submit Event Links</div>
-          <div class="card-subtitle">Fill in the links and open the password-protected workflow dispatch to trigger automation.</div>
+          <div class="card-subtitle">Enter the admin password to unlock the prefilled issue form. The workflow applies and deploys changes automatically.</div>
         </div>
       </div>
 
       <div class="card-body field-gap">
+
+        <!-- Password authentication -->
+        <div class="field-wrap">
+          <label class="field-label" for="adminPassword">Admin password <span class="req">*</span></label>
+          <div style="display:flex;gap:10px;">
+            <input id="adminPassword" type="password" placeholder="Enter admin password" style="flex:1;" />
+            <button class="btn btn-secondary" id="verifyPassword" type="button">Verify</button>
+          </div>
+          <span class="field-hint">Required to generate the prefilled issue</span>
+        </div>
 
         <!-- Slug + Overview -->
         <div class="grid-2">
@@ -365,7 +375,10 @@
       </div>
 
       <div class="action-bar">
-        <button class="btn btn-primary" id="openDispatch" type="button">Open password-protected dispatch</button>
+        <button class="btn btn-primary" id="submitIssue" type="button" disabled>
+          <div class="btn-spinner"></div>
+          <span class="btn-label">Open prefilled GitHub issue</span>
+        </button>
         <button class="btn btn-secondary" id="clearForm" type="button">Clear form</button>
       </div>
     </div>
@@ -447,72 +460,78 @@
 
     /* ── Clear form ── */
     document.getElementById('clearForm').onclick = function() {
-      ['issueEventSlug','issueEventOverview','linkLine','linkMaze','linkOnstage','linkSoccer','linkSumo','issueJsonInput']
+      ['issueEventSlug','issueEventOverview','linkLine','linkMaze','linkOnstage','linkSoccer','linkSumo','issueJsonInput','adminPassword']
         .forEach(function(id){ document.getElementById(id).value = ''; });
+      document.getElementById('submitIssue').disabled = true;
       hideStatus();
     };
 
-    /* ── Submit via prefilled GitHub issue form ── */
-    var submitBtn = document.getElementById('submitIssue');
-    if (submitBtn) {
-      submitBtn.onclick = async function() {
-        var btn  = this;
-        var slug = slugifySegment(document.getElementById('issueEventSlug').value);
-        var overview = (document.getElementById('issueEventOverview').value || '').trim();
-        var lineUrl = (document.getElementById('linkLine').value || '').trim();
-        var mazeUrl = (document.getElementById('linkMaze').value || '').trim();
-        var onstageUrl = (document.getElementById('linkOnstage').value || '').trim();
-        var soccerUrl = (document.getElementById('linkSoccer').value || '').trim();
-        var sumoUrl = (document.getElementById('linkSumo').value || '').trim();
+    /* ── Password verification (client-side SHA-256) ── */
+    // This hash is injected automatically by the update-password-hash workflow.
+    // Run it manually from Actions after setting/changing the ADMIN_PASSWORD secret.
+    var ADMIN_HASH = '__ADMIN_HASH__';
 
-        if (!slug) {
-          showStatus('error', '✕', 'Event slug is required.');
-          document.getElementById('issueEventSlug').focus();
-          return;
-        }
+    async function sha256hex(message) {
+      var buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(message));
+      return Array.from(new Uint8Array(buf)).map(function(b){ return b.toString(16).padStart(2,'0'); }).join('');
+    }
 
-        btn.classList.add('loading');
-        btn.disabled = true;
-        showStatus('info', '⏳', 'Opening prefilled issue form…');
+    document.getElementById('verifyPassword').onclick = async function() {
+      var passwordInput = document.getElementById('adminPassword');
+      var password = passwordInput.value.trim();
+      if (!password) { showStatus('error', '✕', 'Enter a password.'); return; }
+      var hash = await sha256hex(password);
+      if (hash === ADMIN_HASH) {
+        document.getElementById('submitIssue').disabled = false;
+        passwordInput.disabled = true;
+        this.textContent = '✓ Verified';
+        showStatus('success', '✓', 'Password verified. You can now generate the prefilled issue.');
+      } else {
+        showStatus('error', '✕', 'Incorrect password.');
+        passwordInput.focus();
+      }
+    };
 
-        function fallback(value) {
-          return value ? value : '_No response_';
-        }
+    /* ── Submit via prefilled GitHub issue ── */
+    document.getElementById('submitIssue').onclick = async function() {
+      var btn  = this;
+      var slug = slugifySegment(document.getElementById('issueEventSlug').value);
+      var overview = (document.getElementById('issueEventOverview').value || '').trim();
+      var lineUrl = (document.getElementById('linkLine').value || '').trim();
+      var mazeUrl = (document.getElementById('linkMaze').value || '').trim();
+      var onstageUrl = (document.getElementById('linkOnstage').value || '').trim();
+      var soccerUrl = (document.getElementById('linkSoccer').value || '').trim();
+      var sumoUrl = (document.getElementById('linkSumo').value || '').trim();
 
-        var pasteLines = [];
-        if (lineUrl) { pasteLines.push('Line: ' + lineUrl); }
-        if (mazeUrl) { pasteLines.push('Maze: ' + mazeUrl); }
-        if (onstageUrl) { pasteLines.push('Onstage: ' + onstageUrl); }
-        if (soccerUrl) { pasteLines.push('Soccer: ' + soccerUrl); }
-        if (sumoUrl) { pasteLines.push('Sumo: ' + sumoUrl); }
+      if (!slug) {
+        showStatus('error', '✕', 'Event slug is required.');
+        document.getElementById('issueEventSlug').focus();
+        return;
+      }
 
-        var issueBody = [
-          '### Event slug',
-          slug,
-          '',
-          '### Event overview URL',
-          fallback(overview),
-          '',
-          '### Paste links (Name: URL)',
-          pasteLines.length ? pasteLines.join('\n') : '_No response_',
-          '',
-        '### Line URL',
-        fallback(lineUrl),
-        '',
-        '### Maze URL',
-        fallback(mazeUrl),
-        '',
-        '### OnStage URL',
-        fallback(onstageUrl),
-        '',
-        '### Soccer URL',
-        fallback(soccerUrl),
-        '',
-        '### Sumo URL',
-        fallback(sumoUrl),
-        '',
-        '### Extra links',
-        '_No response_'
+      btn.classList.add('loading');
+      btn.disabled = true;
+      showStatus('info', '⏳', 'Opening prefilled issue form…');
+
+      function fallback(value) { return value ? value : '_No response_'; }
+
+      var pasteLines = [];
+      if (lineUrl)    { pasteLines.push('Line: '    + lineUrl); }
+      if (mazeUrl)    { pasteLines.push('Maze: '    + mazeUrl); }
+      if (onstageUrl) { pasteLines.push('Onstage: ' + onstageUrl); }
+      if (soccerUrl)  { pasteLines.push('Soccer: '  + soccerUrl); }
+      if (sumoUrl)    { pasteLines.push('Sumo: '    + sumoUrl); }
+
+      var issueBody = [
+        '### Event slug', slug, '',
+        '### Event overview URL', fallback(overview), '',
+        '### Paste links (Name: URL)', pasteLines.length ? pasteLines.join('\n') : '_No response_', '',
+        '### Line URL', fallback(lineUrl), '',
+        '### Maze URL', fallback(mazeUrl), '',
+        '### OnStage URL', fallback(onstageUrl), '',
+        '### Soccer URL', fallback(soccerUrl), '',
+        '### Sumo URL', fallback(sumoUrl), '',
+        '### Extra links', '_No response_'
       ].join('\n');
 
       var params = new URLSearchParams({
@@ -521,10 +540,8 @@
         body: issueBody
       });
 
-      var issueUrl = 'https://github.com/margauxmedwards/robocuplinks/issues/new?' + params.toString();
-
       try {
-        window.open(issueUrl, '_blank', 'noopener');
+        window.open('https://github.com/margauxmedwards/robocuplinks/issues/new?' + params.toString(), '_blank', 'noopener');
         showStatus('success', '✓',
           'Opened prefilled issue for <strong>' + slug + '</strong>. '
           + 'Submit the issue to trigger automation. '
@@ -536,15 +553,6 @@
         btn.classList.remove('loading');
         btn.disabled = false;
       }
-      };
-    }
-
-    /* ── Open manual workflow dispatch ── */
-    document.getElementById('openDispatch').onclick = function() {
-      window.open('https://github.com/margauxmedwards/robocuplinks/actions/workflows/dispatch-event-links.yml', '_blank', 'noopener');
-      showStatus('success', '🔐',
-        'Opened password-protected workflow dispatch. Enter the admin password and paste your field values there.'
-      );
     };
   </script>
 </body>
