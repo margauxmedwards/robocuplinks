@@ -327,7 +327,6 @@ r/onstage"></textarea>
 
     function buildPrefilledIssueUrl(){
       var params = new URLSearchParams();
-      params.set('template', 'new-event-links.yml');
 
       var slug = slugifySegment(issueEventSlugEl ? issueEventSlugEl.value : '');
       var overview = issueEventOverviewEl ? issueEventOverviewEl.value.trim() : '';
@@ -335,10 +334,38 @@ r/onstage"></textarea>
 
       if(slug){
         params.set('title', 'Event links: ' + slug);
-        params.set('event_slug', slug);
       }
-      if(overview){ params.set('event_overview', overview); }
-      if(pasteLinks){ params.set('paste_links', pasteLinks); }
+      params.set('labels', 'event-links');
+
+      var bodyLines = [
+        '### Event slug',
+        slug || '_No response_',
+        '',
+        '### Event overview URL',
+        overview || '_No response_',
+        '',
+        '### Paste links (Name: URL)',
+        pasteLinks || '_No response_',
+        '',
+        '### Line URL',
+        '_No response_',
+        '',
+        '### Maze URL',
+        '_No response_',
+        '',
+        '### OnStage URL',
+        '_No response_',
+        '',
+        '### Soccer URL',
+        '_No response_',
+        '',
+        '### Sumo URL',
+        '_No response_',
+        '',
+        '### Extra links',
+        '_No response_'
+      ];
+      params.set('body', bodyLines.join('\n'));
 
       return 'https://github.com/margauxmedwards/robocuplinks/issues/new?' + params.toString();
     }

@@ -18,6 +18,8 @@ This repository now supports one-step event link updates via GitHub web UI.
 You can pre-format issue creation with query parameters. The repository homepage now includes an "Open prefilled form" button that builds this URL for you.
 You can also paste one JSON object into the homepage and click "Fill fields from JSON" to auto-build the issue fields before opening the prefilled form.
 
+The prefilled button now creates a complete issue body (with all expected headings) plus the `event-links` label, so details are preserved reliably even if Issue Form field-prefill is inconsistent.
+
 Supported JSON shape:
 
 ```json
@@ -69,7 +71,7 @@ If `Paste links (Name: URL)` is provided, names such as `Onstage`, `Line`, `Maze
 ## Workflows
 
 - `Apply Event Links From Issue`
-  - Trigger: issue with label `event-links`
+  - Trigger: issue with label `event-links` or title starting with `Event links:`
   - Parses form values and updates links
   - Closes the issue automatically after a successful commit
 - `Update Redirect Links`
