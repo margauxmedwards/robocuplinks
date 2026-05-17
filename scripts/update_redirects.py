@@ -42,8 +42,7 @@ def compose_short_url(short_base_url: str, relative_html_path: str) -> str:
         return f"{base}/{without_index}"
 
     if normalized.endswith(".html"):
-        without_suffix = normalized[: -len(".html")]
-        return f"{base}/{without_suffix}"
+        return f"{base}/{normalized}"
 
     raise ValueError(f"Unsupported redirect path for short URL: {relative_html_path}")
 

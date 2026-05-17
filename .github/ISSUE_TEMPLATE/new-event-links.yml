@@ -1,0 +1,93 @@
+name: New Event Links
+description: Add or update all links for one event in a single submission.
+title: "Event links: "
+labels:
+  - event-links
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Submit one form per event. A workflow will update redirects, regenerate HTML files, and commit changes automatically.
+
+  - type: input
+    id: event_slug
+    attributes:
+      label: Event slug
+      description: Used for short links at /r/<event-slug>/...
+      placeholder: qld-2026
+    validations:
+      required: true
+
+  - type: input
+    id: event_overview
+    attributes:
+      label: Event overview URL
+      description: Optional landing page for /r/<event-slug>/ and /r/<event-slug>.html
+      placeholder: https://example.com/event-overview
+    validations:
+      required: false
+
+  - type: textarea
+    id: paste_links
+    attributes:
+      label: Paste links (Name: URL)
+      description: Fast option. Paste one link per line using Name: URL.
+      placeholder: |
+        Onstage: https://example.com/onstage
+        Line: https://example.com/line
+        Maze: https://example.com/maze
+        Soccer: https://example.com/soccer
+        Sumo: https://example.com/sumo
+    validations:
+      required: false
+
+  - type: input
+    id: line
+    attributes:
+      label: Line URL
+      placeholder: https://example.com/line
+    validations:
+      required: false
+
+  - type: input
+    id: maze
+    attributes:
+      label: Maze URL
+      placeholder: https://example.com/maze
+    validations:
+      required: false
+
+  - type: input
+    id: onstage
+    attributes:
+      label: OnStage URL
+      placeholder: https://example.com/onstage
+    validations:
+      required: false
+
+  - type: input
+    id: soccer
+    attributes:
+      label: Soccer URL
+      placeholder: https://example.com/soccer
+    validations:
+      required: false
+
+  - type: input
+    id: sumo
+    attributes:
+      label: Sumo URL
+      placeholder: https://example.com/sumo
+    validations:
+      required: false
+
+  - type: textarea
+    id: extra_links
+    attributes:
+      label: Extra links
+      description: Optional additional links, one per line as slug,url
+      placeholder: |
+        livestream,https://example.com/livestream
+        map,https://example.com/map
+    validations:
+      required: false

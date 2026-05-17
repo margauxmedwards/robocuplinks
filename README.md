@@ -46,19 +46,21 @@ Use URL encoding for spaces and new lines (for example `%20` and `%0A`).
 
 ## What each form field creates
 
-- `Event slug`: base path, for example `qld-2026`
+- `Event slug`: used for issue tracking and commit message context.
 - `Event overview URL`:
-  - `r/<slug>.html`
-  - `r/<slug>/index.html`
+  - `r/index.html`
+  - `r/event.html`
 - `Paste links (Name: URL)`: one line per link, for example `Onstage: https://...`
-- `Line URL`: `r/<slug>/line.html`
-- `Maze URL`: `r/<slug>/maze.html`
-- `OnStage URL`: `r/<slug>/onstage.html`
-- `Soccer URL`: `r/<slug>/soccer.html`
-- `Sumo URL`: `r/<slug>/sumo.html`
-- `Extra links`: one line per `slug,url` -> `r/<slug>/<slug>.html`
+- `Line URL`: `r/line.html`
+- `Maze URL`: `r/maze.html`
+- `OnStage URL`: `r/onstage.html`
+- `Soccer URL`: `r/soccer.html`
+- `Sumo URL`: `r/sumo.html`
+- `Extra links`: one line per `slug,url` -> `r/<slug>.html`
 
 If `Paste links (Name: URL)` is provided, names such as `Onstage`, `Line`, `Maze`, `Soccer`, and `Sumo` map to their standard short-link slugs automatically.
+
+Each new event overwrites these same canonical paths so existing QR codes keep working without regeneration.
 
 ## Static QR files
 

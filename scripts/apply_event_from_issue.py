@@ -171,18 +171,20 @@ def main() -> None:
         event_overview = normalize_url(event_overview)
         if not is_valid_url(event_overview):
             raise ValueError("Event overview URL is invalid.")
-        updates[f"r/{event_slug}.html"] = event_overview
-        updates[f"r/{event_slug}/index.html"] = event_overview
+        # Canonical overview paths stay stable across events.
+        updates["r/index.html"] = event_overview
+        updates["r/event.html"] = event_overview
 
     for component, url in component_map.items():
         if not url:
             continue
         if not is_valid_url(url):
             raise ValueError(f"{component} URL is invalid.")
-        updates[f"r/{event_slug}/{component}.html"] = url
+        # Canonical component paths stay stable across events.
+        updates[f"r/{component}.html"] = url
 
     for link_slug, link_url in parse_extra_links(extra_links_raw):
-        updates[f"r/{event_slug}/{link_slug}.html"] = link_url
+        updates[f"r/{link_slug}.html"] = link_url
 
     if not updates:
         raise ValueError("At least one URL must be provided.")
