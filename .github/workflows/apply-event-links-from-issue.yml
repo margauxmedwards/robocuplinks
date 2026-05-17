@@ -51,6 +51,37 @@ jobs:
       - name: Regenerate redirect HTML files
         run: pixi run update-redirects
 
+      - name: Verify redirect destinations match redirects.json
+        run: |
+          python3 - << 'PYEOF'
+          import html, json, re, sys
+          from pathlib import Path
+
+          with open("redirects.json") as f:
+              redirects = json.load(f)
+
+          failures = []
+          for path, expected_url in redirects.items():
+              html_path = Path(path)
+              if not html_path.exists():
+                  failures.append(f"{path}: file not found")
+                  continue
+              content = html_path.read_text()
+              escaped_url = html.escape(expected_url, quote=True)
+              if escaped_url not in content:
+                  m = re.search(r'location\.replace\("([^"]+)"\)', content)
+                  actual = m.group(1).replace("&amp;", "&") if m else "unknown"
+                  failures.append(f"{path}: expected {expected_url!r}, got {actual!r}")
+
+          if failures:
+              print("Redirect destination mismatch(es):")
+              for msg in failures:
+                  print(f"  - {msg}")
+              sys.exit(1)
+
+          print(f"All {len(redirects)} redirect destination(s) verified.")
+          PYEOF
+
       - name: Commit and push updates
         id: commit
         run: |
