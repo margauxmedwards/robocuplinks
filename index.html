@@ -469,7 +469,7 @@
     /* ── Password verification (client-side SHA-256) ── */
     // This hash is injected automatically by the update-password-hash workflow.
     // Run it manually from Actions after setting/changing the ADMIN_PASSWORD secret.
-    var ADMIN_HASH = '__ADMIN_HASH__';
+    var ADMIN_HASH = '16cb683cdb276a68817648b3ff5429e2c3b2cd5eba2b1d6b2a1e704fda1aaeb1';
 
     async function sha256hex(message) {
       var buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(message));
