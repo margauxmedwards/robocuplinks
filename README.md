@@ -1,10 +1,13 @@
 # RoboCup Links Automation
 
-This repo now uses one process only:
+This repo supports a bot-backed process:
 
 1. Open the admin page.
-2. Fill links (or paste JSON) and open the prefilled GitHub issue.
-3. GitHub Actions updates canonical short links and commits changes.
+2. Fill links (or paste JSON) and submit.
+3. A bot endpoint triggers the workflow.
+4. GitHub Actions updates canonical short links and commits changes.
+
+The browser never stores a GitHub token and submissions are not tied to the submitter's GitHub profile.
 
 ## Canonical links (stable)
 
@@ -25,7 +28,14 @@ Existing QR PNG files are treated as long-lived assets and are not regenerated d
 
 - Issue template: `.github/ISSUE_TEMPLATE/new-event-links.yml`
 - Processor workflow: `.github/workflows/apply-event-links-from-issue.yml`
+- Dispatch workflow (bot endpoint target): `.github/workflows/dispatch-event-links.yml`
 - Redirect/QR generator workflow: `.github/workflows/update-redirect-links.yml`
+
+## Bot endpoint setup
+
+Deploy the Worker in `workers/submit-event-links-worker.js` and configure `window.RCLINKS_BOT_ENDPOINT` in `index.html`.
+
+Detailed setup steps are in `workers/README.md`.
 
 ## Environment
 

@@ -295,7 +295,7 @@
         <div class="card-icon green">🔗</div>
         <div>
           <div class="card-title">Submit Event Links</div>
-          <div class="card-subtitle">Enter the admin password to unlock the prefilled issue form. The workflow applies and deploys changes automatically.</div>
+          <div class="card-subtitle">Submit through the bot endpoint. Changes are applied by automation without creating a user-owned issue.</div>
         </div>
       </div>
 
@@ -304,11 +304,8 @@
         <!-- Password authentication -->
         <div class="field-wrap">
           <label class="field-label" for="adminPassword">Admin password <span class="req">*</span></label>
-          <div style="display:flex;gap:10px;">
-            <input id="adminPassword" type="password" placeholder="Enter admin password" style="flex:1;" />
-            <button class="btn btn-secondary" id="verifyPassword" type="button">Verify</button>
-          </div>
-          <span class="field-hint">Required to generate the prefilled issue</span>
+          <input id="adminPassword" type="password" placeholder="Enter admin password" autocomplete="current-password" />
+          <span class="field-hint">Verified by the bot endpoint and never stored in the browser.</span>
         </div>
 
         <!-- Slug + Overview -->
@@ -375,9 +372,9 @@
       </div>
 
       <div class="action-bar">
-        <button class="btn btn-primary" id="submitIssue" type="button" disabled>
+        <button class="btn btn-primary" id="submitIssue" type="button">
           <div class="btn-spinner"></div>
-          <span class="btn-label">Open prefilled GitHub issue</span>
+          <span class="btn-label">Deploy event links</span>
         </button>
         <button class="btn btn-secondary" id="clearForm" type="button">Clear form</button>
       </div>
@@ -431,8 +428,12 @@
 
     var REPO = getRepoContext();
     var repoSlug = REPO.owner + '/' + REPO.repo;
-    var workflowRunsUrl = 'https://github.com/' + repoSlug + '/actions/workflows/apply-event-links-from-issue.yml';
+    var workflowRunsUrl = 'https://github.com/' + repoSlug + '/actions/workflows/dispatch-event-links.yml';
     document.getElementById('workflowRunsLink').href = workflowRunsUrl;
+
+    // Set this in production to your deployed bot endpoint URL.
+    // Example: https://robocup-links-bot.YOUR-SUBDOMAIN.workers.dev/submit-event-links
+    var BOT_ENDPOINT = window.RCLINKS_BOT_ENDPOINT || '';
 
     function slugifySegment(input) {
       return String(input || '').trim().toLowerCase()
@@ -487,40 +488,14 @@
     document.getElementById('clearForm').onclick = function() {
       ['issueEventSlug','issueEventOverview','linkLine','linkMaze','linkOnstage','linkSoccer','linkSumo','issueJsonInput','adminPassword']
         .forEach(function(id){ document.getElementById(id).value = ''; });
-      document.getElementById('submitIssue').disabled = true;
       hideStatus();
     };
 
-    /* ── Password verification (client-side SHA-256) ── */
-    // This hash is injected automatically by the update-password-hash workflow.
-    // Run it manually from Actions after setting/changing the ADMIN_PASSWORD secret.
-    var ADMIN_HASH = '16cb683cdb276a68817648b3ff5429e2c3b2cd5eba2b1d6b2a1e704fda1aaeb1';
-
-    async function sha256hex(message) {
-      var buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(message));
-      return Array.from(new Uint8Array(buf)).map(function(b){ return b.toString(16).padStart(2,'0'); }).join('');
-    }
-
-    document.getElementById('verifyPassword').onclick = async function() {
-      var passwordInput = document.getElementById('adminPassword');
-      var password = passwordInput.value.trim();
-      if (!password) { showStatus('error', '✕', 'Enter a password.'); return; }
-      var hash = await sha256hex(password);
-      if (hash === ADMIN_HASH) {
-        document.getElementById('submitIssue').disabled = false;
-        passwordInput.disabled = true;
-        this.textContent = '✓ Verified';
-        showStatus('success', '✓', 'Password verified. You can now generate the prefilled issue.');
-      } else {
-        showStatus('error', '✕', 'Incorrect password.');
-        passwordInput.focus();
-      }
-    };
-
-    /* ── Submit via prefilled GitHub issue ── */
+    /* ── Submit via bot endpoint ── */
     document.getElementById('submitIssue').onclick = async function() {
       var btn  = this;
       var slug = slugifySegment(document.getElementById('issueEventSlug').value);
+      var password = (document.getElementById('adminPassword').value || '').trim();
       var overview = (document.getElementById('issueEventOverview').value || '').trim();
       var lineUrl = (document.getElementById('linkLine').value || '').trim();
       var mazeUrl = (document.getElementById('linkMaze').value || '').trim();
@@ -533,49 +508,58 @@
         document.getElementById('issueEventSlug').focus();
         return;
       }
+      if (!password) {
+        showStatus('error', '✕', 'Admin password is required.');
+        document.getElementById('adminPassword').focus();
+        return;
+      }
+      if (!BOT_ENDPOINT) {
+        showStatus('error', '✕', 'Bot endpoint is not configured. Set <code>window.RCLINKS_BOT_ENDPOINT</code> in this page.');
+        return;
+      }
 
       btn.classList.add('loading');
       btn.disabled = true;
-      showStatus('info', '⏳', 'Opening prefilled issue form…');
+      showStatus('info', '⏳', 'Triggering deployment workflow…');
 
-      function fallback(value) { return value ? value : '_No response_'; }
-
-      var pasteLines = [];
-      if (lineUrl)    { pasteLines.push('Line: '    + lineUrl); }
-      if (mazeUrl)    { pasteLines.push('Maze: '    + mazeUrl); }
-      if (onstageUrl) { pasteLines.push('Onstage: ' + onstageUrl); }
-      if (soccerUrl)  { pasteLines.push('Soccer: '  + soccerUrl); }
-      if (sumoUrl)    { pasteLines.push('Sumo: '    + sumoUrl); }
-
-      var issueBody = [
-        '### Event slug', slug, '',
-        '### Event overview URL', fallback(overview), '',
-        '### Paste links (Name: URL)', pasteLines.length ? pasteLines.join('\n') : '_No response_', '',
-        '### Line URL', fallback(lineUrl), '',
-        '### Maze URL', fallback(mazeUrl), '',
-        '### OnStage URL', fallback(onstageUrl), '',
-        '### Soccer URL', fallback(soccerUrl), '',
-        '### Sumo URL', fallback(sumoUrl), '',
-        '### Extra links', '_No response_'
-      ].join('\n');
-
-      var params = new URLSearchParams({
-        title: 'Event links: ' + slug,
-        labels: 'event-links',
-        body: issueBody
-      });
-
-      var newIssueUrl = 'https://github.com/' + repoSlug + '/issues/new?' + params.toString();
+      var payload = {
+        repo_owner: REPO.owner,
+        repo_name: REPO.repo,
+        password: password,
+        event_slug: slug,
+        event_overview: overview,
+        line_url: lineUrl,
+        maze_url: mazeUrl,
+        onstage_url: onstageUrl,
+        soccer_url: soccerUrl,
+        sumo_url: sumoUrl
+      };
 
       try {
-        window.open(newIssueUrl, '_blank', 'noopener');
+        var resp = await fetch(BOT_ENDPOINT, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        });
+
+        var data = {};
+        try { data = await resp.json(); } catch(e) {}
+
+        if (!resp.ok) {
+          var msg = (data && data.error) ? data.error : ('HTTP ' + resp.status);
+          showStatus('error', '✕', 'Submission failed: ' + msg);
+          return;
+        }
+
+        document.getElementById('adminPassword').value = '';
         showStatus('success', '✓',
-          'Opened prefilled issue for <strong>' + slug + '</strong>. '
-          + 'Submit the issue to trigger automation. '
+          'Workflow triggered for <strong>' + slug + '</strong>. '
           + '<a href="' + workflowRunsUrl + '" target="_blank" rel="noopener">Watch runs ↗</a>'
         );
       } catch (err) {
-        showStatus('error', '✕', 'Unable to open GitHub issue form: ' + err.message);
+        showStatus('error', '✕', 'Unable to reach bot endpoint: ' + err.message);
       } finally {
         btn.classList.remove('loading');
         btn.disabled = false;
