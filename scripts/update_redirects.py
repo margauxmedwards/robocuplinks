@@ -168,6 +168,31 @@ def prune_stale_qr_files(repo_root: Path, qr_dir: str, expected_paths: Set[Path]
     return removed
 
 
+def prune_stale_redirect_files(repo_root: Path, redirects: Dict[str, str], managed_root: str = "r") -> int:
+    managed_dir = (repo_root / managed_root).resolve()
+    if not managed_dir.exists():
+        return 0
+
+    expected = {
+        (repo_root / relative_path).resolve()
+        for relative_path in redirects
+        if relative_path.startswith(f"{managed_root}/")
+    }
+
+    removed = 0
+    for file_path in managed_dir.rglob("*.html"):
+        resolved = file_path.resolve()
+        if resolved not in expected:
+            file_path.unlink()
+            removed += 1
+
+    for subdir in sorted(managed_dir.rglob("*"), reverse=True):
+        if subdir.is_dir() and not any(subdir.iterdir()):
+            subdir.rmdir()
+
+    return removed
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Update redirect HTML files from JSON config.")
     parser.add_argument(
@@ -197,11 +222,13 @@ def main() -> None:
         short_base_url=args.short_base_url,
         qr_dir=args.qr_dir,
     )
+    redirect_removed_count = prune_stale_redirect_files(repo_root, redirects)
     qr_removed_count = prune_stale_qr_files(repo_root, args.qr_dir, expected_qr_paths)
 
     print(
         f"Processed {len(redirects)} redirects. "
         f"Updated {updated_count} redirect file(s), "
+        f"removed {redirect_removed_count} stale redirect file(s), "
         f"updated {qr_updated_count} QR file(s), "
         f"removed {qr_removed_count} stale QR file(s)."
     )

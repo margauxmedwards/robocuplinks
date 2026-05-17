@@ -3,312 +3,126 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Link Host + DIY Short Link & QR</title>
+  <title>RoboCup Links Admin</title>
   <style>
-    :root{--ink:#0f172a;--muted:#475569;--bg:#f7f8fb;--card:#ffffff;--line:#e2e8f0;--accent:#16a34a}
-    *{box-sizing:border-box}
-    body{font-family:Inter,system-ui,Segoe UI,Arial,sans-serif;margin:0;background:var(--bg);color:var(--ink)}
-    header{padding:22px 20px}
-    h1{margin:0 0 6px}
-    p.lead{margin:0;color:var(--muted)}
-    .wrap{padding:20px;display:grid;gap:16px}
-    .card{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:0 6px 18px rgba(16,24,40,.06)}
-    .inner{padding:16px}
-    label{display:block;font-size:14px;color:var(--muted);margin-bottom:6px}
-    input[type="url"],input[type="text"],textarea,select{width:100%;padding:10px 12px;border-radius:10px;border:1px solid #d0d5dd;background:#fff}
-    .row{display:grid;grid-template-columns:1.2fr .8fr;gap:16px}
-    .inline{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-    .btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
-    button{background:#0f172a;color:#fff;border:none;border-radius:10px;padding:10px 12px;cursor:pointer}
-    button.secondary{background:#e5e7eb;color:#0f172a}
-    button.success{background:var(--accent)}
-    iframe{width:100%;min-height:520px;border:0;border-radius:12px;background:#f1f5f9}
-    .qrbox{border:1px dashed #cbd5e1;border-radius:12px;min-height:320px;display:grid;place-items:center;background:#fff}
-    .muted{color:var(--muted)}
-    .hint{font-size:12px;color:var(--muted)}
-    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-    .small{font-size:12px}
-    .event-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-    .result-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-top:12px}
-    .result-card{border:1px solid var(--line);border-radius:12px;padding:12px;background:#f8fafc}
-    .result-card h4{margin:0 0 6px;font-size:15px}
-    .result-card img,.result-card canvas{display:block;margin:10px auto 0;max-width:100%;height:auto}
-    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
-    .admin-card{background:linear-gradient(130deg,#ecfeff,#f0fdf4);border:1px solid #bae6fd}
-    .admin-card h3{margin:0 0 8px}
-    .admin-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
-    .admin-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
-    .admin-json{margin-top:10px}
-    .pill{display:inline-block;padding:4px 8px;border-radius:999px;background:#0f172a;color:#fff;font-size:12px}
-    @media (max-width: 900px){
-      .row,.event-grid,.admin-grid{grid-template-columns:1fr}
+    :root {
+      --ink: #0f172a;
+      --muted: #475569;
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --line: #dbe2ea;
+      --accent: #15803d;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Arial, sans-serif;
+      color: var(--ink);
+      background: radial-gradient(circle at 10% 0%, #e0f2fe 0%, var(--bg) 45%);
+    }
+    main { max-width: 980px; margin: 0 auto; padding: 28px 18px 36px; }
+    h1 { margin: 0 0 8px; }
+    .lead { margin: 0 0 22px; color: var(--muted); }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    label { display: block; font-size: 14px; margin-bottom: 6px; color: var(--muted); }
+    input[type="text"], input[type="url"], textarea {
+      width: 100%;
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 14px;
+      background: #fff;
+    }
+    textarea { resize: vertical; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+    button {
+      border: none;
+      border-radius: 10px;
+      padding: 10px 12px;
+      cursor: pointer;
+      background: #0f172a;
+      color: #fff;
+    }
+    button.secondary { background: #e2e8f0; color: #0f172a; }
+    button.success { background: var(--accent); }
+    .muted { color: var(--muted); }
+    ul { margin: 8px 0 0; }
+    @media (max-width: 900px) {
+      .grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
-  <header>
-    <h1>Link Host + DIY Short Link & QR</h1>
-    <p class="lead">Paste any URL to preview (if embeddable), generate a QR, and create copy‑paste redirect code for your own short link. Default host is your GitHub Pages; you can change & save a new default.</p>
-  </header>
+  <main>
+    <h1>RoboCup Links Admin</h1>
+    <p class="lead">Single process only: submit one issue, update fixed links, keep the same QR codes.</p>
 
-  <div class="wrap">
-    <section class="card admin-card">
-      <div class="inner">
-        <span class="pill">Recommended</span>
-        <h3>One-step event updates</h3>
-        <p class="muted" style="margin:0">Use the GitHub form to submit a new event once. The workflow updates fixed short links (for example /r/line.html and /r/onstage.html), so the same QR codes always point to the latest event, then commits automatically.</p>
-        <div class="admin-grid">
-          <div>
-            <label for="issueEventSlug">Event slug</label>
-            <input id="issueEventSlug" type="text" placeholder="qld-2026" />
-          </div>
-          <div>
-            <label for="issueEventOverview">Event overview URL (optional)</label>
-            <input id="issueEventOverview" type="url" placeholder="https://example.com/event-overview" />
-          </div>
+    <section class="card">
+      <h2 style="margin:0 0 8px">Create Event Update Issue</h2>
+      <p class="muted" style="margin:0 0 12px">This builds a prefilled issue body for the automation workflow.</p>
+
+      <div class="grid">
+        <div>
+          <label for="issueEventSlug">Event slug</label>
+          <input id="issueEventSlug" type="text" placeholder="bne-2026" />
         </div>
-        <div style="margin-top:10px">
-          <label for="issuePasteLinks">Prefill links (Name: URL, one per line)</label>
-          <textarea id="issuePasteLinks" rows="6" class="mono" placeholder="Onstage: https://example.com/onstage
+        <div>
+          <label for="issueEventOverview">Event overview URL (optional)</label>
+          <input id="issueEventOverview" type="url" placeholder="https://example.com/event-overview" />
+        </div>
+      </div>
+
+      <div style="margin-top:10px">
+        <label for="issuePasteLinks">Links (Name: URL, one per line)</label>
+        <textarea id="issuePasteLinks" rows="7" class="mono" placeholder="Onstage: https://example.com/onstage
 Line: https://example.com/line
 Maze: https://example.com/maze
 Soccer: https://example.com/soccer
 Sumo: https://example.com/sumo"></textarea>
-        </div>
-        <div class="admin-json">
-          <label for="issueJsonInput">Auto-fill from JSON (optional)</label>
-          <textarea id="issueJsonInput" rows="8" class="mono" placeholder='{"eventSlug":"qld-2026","eventOverview":"https://example.com/overview","links":{"Onstage":"https://example.com/onstage","Line":"https://example.com/line","Maze":"https://example.com/maze","Soccer":"https://example.com/soccer","Sumo":"https://example.com/sumo"}}'></textarea>
-        </div>
-        <div class="admin-actions">
-          <button id="fillFromJson" class="secondary" type="button">Fill fields from JSON</button>
-          <button id="openPrefilledIssue" class="success" type="button">Open prefilled form</button>
-          <a href="https://github.com/margauxmedwards/robocuplinks/actions/workflows/apply-event-links-from-issue.yml" target="_blank" rel="noopener"><button class="secondary" type="button">View workflow runs</button></a>
-        </div>
-      </div>
-    </section>
-
-    <!-- VIEWER -->
-    <section class="card">
-      <div class="inner">
-        <label for="sourceUrl">Target link (any URL)</label>
-        <input id="sourceUrl" type="url" placeholder="https://example.com/anything" />
-        <div class="inline" style="margin-top:8px">
-          <select id="size">
-            <option value="520">Tall</option>
-            <option value="660">Extra Tall</option>
-            <option value="420">Compact</option>
-          </select>
-          <div class="btns">
-            <button id="apply" class="success">Apply to viewer</button>
-            <button id="openExt" class="secondary">Open in new tab</button>
-          </div>
-        </div>
-        <p class="hint" style="margin-top:8px">Note: Some sites block embedding in iframes. If the preview fails, use “Open in new tab.”</p>
-      </div>
-    </section>
-
-    <section class="row">
-      <div class="card">
-        <div class="inner">
-          <iframe id="embedFrame" title="Link viewer"></iframe>
-        </div>
       </div>
 
-      <!-- SHORT LINK + QR -->
-      <div class="card">
-        <div class="inner">
-          <h3 style="margin:0 0 8px">DIY Short Link & QR</h3>
-          <div class="grid2">
-            <div>
-              <label for="baseUrl">Host base URL</label>
-              <input id="baseUrl" type="url" placeholder="https://<host>/[optional-subpath]" />
-              <p class="small muted">Default: <code>https://margauxmedwards.github.io/robocuplinks</code> (change below to save your own)</p>
-            </div>
-            <div>
-              <label for="shortPath">Short path</label>
-              <input id="shortPath" type="text" placeholder="r/maze" />
-            </div>
-          </div>
-          <div class="inline" style="margin-top:8px">
-            <label class="inline"><input id="prettyUrl" type="checkbox" style="margin-right:6px"/> Pretty URL (folder index): <span class="small muted">…/slug/</span></label>
-            <div class="btns">
-              <button id="saveDefaultHost" class="secondary">Save as default host</button>
-              <button id="resetDefaultHost" class="secondary">Reset to GitHub default</button>
-            </div>
-          </div>
-          <div class="btns" style="margin-top:8px">
-            <button id="buildShort" class="success">Generate code + QR</button>
-            <button id="openShort" class="secondary">Open short link</button>
-            <button id="downloadQR" class="secondary">Download QR</button>
-          </div>
-          <div class="qrbox" style="margin-top:10px"><div id="qrcode">QR will appear here</div></div>
-          <div style="margin-top:10px"><label>Short link</label><input id="shortLink" type="url" readonly/></div>
-          <div style="margin-top:8px" class="small muted" id="placementHint"></div>
-          <div style="margin-top:10px">
-            <label>Redirect HTML (copy & paste)</label>
-            <textarea id="redirectCode" rows="10" readonly></textarea>
-            <div class="btns">
-              <button id="copyCode" class="secondary">Copy code</button>
-            </div>
-          </div>
-          <p class="hint" style="margin-top:8px">This makes a tiny HTML file that redirects to your target link. Upload it to the path shown above, then use the short link + QR.</p>
-        </div>
+      <div style="margin-top:10px">
+        <label for="issueJsonInput">Auto-fill from JSON (optional)</label>
+        <textarea id="issueJsonInput" rows="8" class="mono" placeholder='{"eventSlug":"bne-2026","eventOverview":"https://example.com/overview","links":{"Onstage":"https://example.com/onstage","Line":"https://example.com/line","Maze":"https://example.com/maze","Soccer":"https://example.com/soccer","Sumo":"https://example.com/sumo"}}'></textarea>
       </div>
-    </section>
 
-    <!-- QUICK SLUGS + BULK ZIP -->
-    <section class="card">
-      <div class="inner">
-        <h3 style="margin:0 0 8px">Quick‑create popular RCJQ links</h3>
-        <div class="btns">
-          <button class="secondary" data-quick="r/line">Create /r/line</button>
-          <button class="secondary" data-quick="r/soccer">Create /r/soccer</button>
-          <button class="secondary" data-quick="r/maze">Create /r/maze</button>
-        </div>
-        <details style="margin-top:10px">
-          <summary><strong>Build a ZIP of multiple redirect files</strong></summary>
-          <label for="bulkSlugs" style="margin-top:8px">Slugs (one per line, no .html)</label>
-          <textarea id="bulkSlugs" rows="6" placeholder="r/line
-r/soccer
-r/maze
-r/onstage"></textarea>
-          <div class="btns">
-            <button id="bulkZip" class="success">Download ZIP of redirects</button>
-          </div>
-          <p class="hint">The ZIP will contain redirect files for each entry, pointing at the current link. Folder vs file naming follows the “Pretty URL” setting.</p>
-        </details>
+      <div class="actions">
+        <button id="fillFromJson" class="secondary" type="button">Fill fields from JSON</button>
+        <button id="openPrefilledIssue" class="success" type="button">Open prefilled form</button>
+        <a href="https://github.com/margauxmedwards/robocuplinks/actions/workflows/apply-event-links-from-issue.yml" target="_blank" rel="noopener"><button class="secondary" type="button">View workflow runs</button></a>
       </div>
     </section>
 
     <section class="card">
-      <div class="inner">
-        <h3 style="margin:0 0 8px">Event pack builder</h3>
-        <p class="hint" style="margin-top:0">Define one event in a single JSON block, then generate all redirect files plus a printable QR sign for that event.</p>
-        <div class="event-grid">
-          <div>
-            <label for="eventConfig">Event JSON</label>
-            <textarea id="eventConfig" rows="16" class="mono" spellcheck="false"></textarea>
-            <div class="btns">
-              <button id="loadEventExample" class="secondary">Load example</button>
-              <button id="buildEventPack" class="success">Download event pack ZIP</button>
-            </div>
-          </div>
-          <div>
-            <label for="eventSummary">Generated short links</label>
-            <textarea id="eventSummary" rows="16" readonly class="mono"></textarea>
-            <div style="margin-top:10px">
-              <label>Event notes</label>
-              <div id="eventPlacementHint" class="small muted"></div>
-            </div>
-          </div>
-        </div>
-        <div id="eventResults" class="result-grid"></div>
-      </div>
+      <h2 style="margin:0 0 8px">Canonical Links</h2>
+      <p class="muted" style="margin:0">Each event overwrites these same paths:</p>
+      <ul>
+        <li>/r/index.html and /r/event.html</li>
+        <li>/r/line.html</li>
+        <li>/r/maze.html</li>
+        <li>/r/onstage.html</li>
+        <li>/r/soccer.html</li>
+        <li>/r/sumo.html</li>
+      </ul>
     </section>
-  </div>
+  </main>
 
-  <!-- QR + ZIP libs -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script>
-    // Elements
-    var srcInput = document.getElementById('sourceUrl');
-    var frame = document.getElementById('embedFrame');
-    var sizeSel = document.getElementById('size');
-    var baseUrlEl = document.getElementById('baseUrl');
-    var shortPathEl = document.getElementById('shortPath');
-    var prettyEl = document.getElementById('prettyUrl');
-    var shortLinkInput = document.getElementById('shortLink');
-    var placementHintEl = document.getElementById('placementHint');
-    var redirectCodeEl = document.getElementById('redirectCode');
-    var qrWrap = document.getElementById('qrcode');
-    var eventConfigEl = document.getElementById('eventConfig');
-    var eventSummaryEl = document.getElementById('eventSummary');
-    var eventPlacementHintEl = document.getElementById('eventPlacementHint');
-    var eventResultsEl = document.getElementById('eventResults');
     var issueEventSlugEl = document.getElementById('issueEventSlug');
     var issueEventOverviewEl = document.getElementById('issueEventOverview');
     var issuePasteLinksEl = document.getElementById('issuePasteLinks');
     var issueJsonInputEl = document.getElementById('issueJsonInput');
 
-    var qrcode = null;
-    var LS_KEY = 'shortlink_base_url_v1';
-    var EVENT_EXAMPLE = {
-      eventSlug: 'qld-2026',
-      eventName: 'QLD State 2026',
-      eventUrl: 'https://example.com/qld-2026-overview',
-      links: {
-        onstage: 'https://drive.google.com/example-onstage',
-        maze: 'https://drive.google.com/example-maze',
-        line: 'https://drive.google.com/example-line',
-        soccer: 'https://drive.google.com/example-soccer'
-      }
-    };
-
-    // Link helpers
-    function cleanLink(input){
-      var s = (input || '').trim();
-      try { var u = new URL(s); return u.href; } catch(e){ return null; }
-    }
-
-    function setIframe(src){ frame.src = src; frame.style.minHeight = sizeSel.value + 'px'; }
-
-    function makeQR(url){
-      if(!url) return;
-      qrWrap.innerHTML = '';
-      try{
-        if(typeof QRCode === 'undefined'){
-          var img = document.createElement('img');
-          img.alt = 'QR'; img.width = 320; img.height = 320;
-          img.src = 'https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=' + encodeURIComponent(url);
-          qrWrap.appendChild(img);
-          qrcode = { __img: img };
-          return;
-        }
-        qrcode = new QRCode(qrWrap, { text: url, width: 320, height: 320, correctLevel: QRCode.CorrectLevel.M });
-      }catch(err){ console.error('QR generation error', err); alert('Could not generate QR.'); }
-    }
-
-    function saveBlob(filename, blob){
-      var a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 1500);
-    }
-
-    function composeShortUrl(base, path, pretty){
-      base = (base || '').trim().replace(/\/$/, '');
-      path = (path || '').trim().replace(/^\//, '');
-      if(!base || !path) return null;
-      if(pretty){
-        return base + '/' + path.replace(/\/$/, '') + '/';
-      }
-      var file = /\.html$/i.test(path) ? path : path + '.html';
-      return base + '/' + file;
-    }
-
-    function generateRedirectHTML(targetUrl){
-      var esc = (targetUrl || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-      var head = "<!doctype html><html lang='en'><head><meta charset='utf-8'><meta http-equiv='refresh' content='0; url=" + esc + "'><meta name='robots' content='noindex'><link rel='canonical' href='" + esc + "'><title>Redirecting…</title></head><body>";
-      var noscript = "<noscript><a href='" + esc + "'>Continue</a></noscript>";
-      var script = "<script>location.replace(\"" + esc + "\");</" + "script>";
-      return head + noscript + script + '</body></html>';
-    }
-
-    function updatePlacementHint(base, path, pretty){
-      if(!base || !path){ placementHintEl.textContent = ''; return; }
-      base = base.replace(/\/$/, ''); path = path.replace(/^\//, '').replace(/\/$/, '');
-      if(pretty){
-        placementHintEl.textContent = 'Upload as ' + base + '/' + path + '/index.html';
-      } else {
-        var file = /\.html$/i.test(path) ? path : path + '.html';
-        placementHintEl.textContent = 'Upload as ' + base + '/' + file;
-      }
-    }
-
-    function slugifySegment(input){
+    function slugifySegment(input) {
       return String(input || '')
         .trim()
         .toLowerCase()
@@ -316,51 +130,81 @@ r/onstage"></textarea>
         .replace(/^-+|-+$/g, '');
     }
 
-    function titleCaseSlug(input){
+    function titleCaseSlug(input) {
       return String(input || '')
         .split(/[-_\s]+/)
         .filter(Boolean)
-        .map(function(part){ return part.charAt(0).toUpperCase() + part.slice(1); })
+        .map(function(part) { return part.charAt(0).toUpperCase() + part.slice(1); })
         .join(' ');
     }
 
-    function buildPrefilledIssueUrl(){
-      var params = new URLSearchParams();
+    function fillIssueFormFromJson() {
+      var raw = (issueJsonInputEl.value || '').trim();
+      if (!raw) {
+        alert('Paste event JSON first.');
+        return;
+      }
 
-      var slug = slugifySegment(issueEventSlugEl ? issueEventSlugEl.value : '');
-      var overview = issueEventOverviewEl ? issueEventOverviewEl.value.trim() : '';
-      var pasteLinks = issuePasteLinksEl ? issuePasteLinksEl.value.trim() : '';
-      var splitLinks = {
-        line: '',
-        maze: '',
-        onstage: '',
-        soccer: '',
-        sumo: ''
-      };
+      var parsed;
+      try {
+        parsed = JSON.parse(raw);
+      } catch (err) {
+        alert('Event JSON is invalid.');
+        return;
+      }
+
+      var slug = slugifySegment(parsed.eventSlug || parsed.slug || parsed.event || '');
+      if (!slug) {
+        alert('Event JSON needs eventSlug (or slug).');
+        return;
+      }
+
+      var overview = '';
+      if (parsed.eventOverview) overview = String(parsed.eventOverview).trim();
+      else if (parsed.eventUrl) overview = String(parsed.eventUrl).trim();
+
+      var linksObj = parsed.links;
+      if (!linksObj || typeof linksObj !== 'object' || Array.isArray(linksObj)) {
+        alert('Event JSON needs a links object.');
+        return;
+      }
+
+      var lines = [];
+      Object.keys(linksObj).forEach(function(key) {
+        var value = String(linksObj[key] || '').trim();
+        if (value) lines.push(titleCaseSlug(key) + ': ' + value);
+      });
+
+      issueEventSlugEl.value = slug;
+      issueEventOverviewEl.value = overview;
+      issuePasteLinksEl.value = lines.join('\n');
+      alert('Event fields filled from JSON.');
+    }
+
+    function buildPrefilledIssueUrl() {
+      var params = new URLSearchParams();
+      var slug = slugifySegment(issueEventSlugEl.value);
+      var overview = issueEventOverviewEl.value.trim();
+      var pasteLinks = issuePasteLinksEl.value.trim();
+      var splitLinks = { line: '', maze: '', onstage: '', soccer: '', sumo: '' };
       var unknownLinks = [];
 
-      if(pasteLinks){
+      if (pasteLinks) {
         var lines = pasteLinks.split(/\r?\n/);
-        for(var i=0;i<lines.length;i++){
+        for (var i = 0; i < lines.length; i++) {
           var text = lines[i].trim();
-          if(!text) continue;
-          if(text.indexOf(':') < 0) continue;
+          if (!text || text.indexOf(':') < 0) continue;
           var pair = text.split(':');
           var name = slugifySegment(pair.shift() || '');
           var url = pair.join(':').trim().replace(/^['\"]|['\"]$/g, '');
-          if(!name || !url) continue;
-          if(name === 'on-stage'){ name = 'onstage'; }
-          if(splitLinks.hasOwnProperty(name)){
-            splitLinks[name] = url;
-          } else {
-            unknownLinks.push(name + ',' + url);
-          }
+          if (!name || !url) continue;
+          if (name === 'on-stage') name = 'onstage';
+          if (Object.prototype.hasOwnProperty.call(splitLinks, name)) splitLinks[name] = url;
+          else unknownLinks.push(name + ',' + url);
         }
       }
 
-      if(slug){
-        params.set('title', 'Event links: ' + slug);
-      }
+      if (slug) params.set('title', 'Event links: ' + slug);
       params.set('labels', 'event-links');
 
       var bodyLines = [
@@ -391,336 +235,15 @@ r/onstage"></textarea>
         '### Extra links',
         unknownLinks.length ? unknownLinks.join('\n') : '_No response_'
       ];
-      params.set('body', bodyLines.join('\n'));
 
+      params.set('body', bodyLines.join('\n'));
       return 'https://github.com/margauxmedwards/robocuplinks/issues/new?' + params.toString();
     }
 
-    function fillIssueFormFromJson(){
-      if(!issueJsonInputEl){ return; }
-      var raw = (issueJsonInputEl.value || '').trim();
-      if(!raw){ alert('Paste event JSON first.'); return; }
-
-      var parsed;
-      try{
-        parsed = JSON.parse(raw);
-      }catch(err){
-        alert('Event JSON is invalid.');
-        return;
-      }
-
-      var slug = slugifySegment(parsed.eventSlug || parsed.slug || parsed.event || '');
-      if(!slug){
-        alert('Event JSON needs eventSlug (or slug).');
-        return;
-      }
-
-      var overview = '';
-      if(parsed.eventOverview){ overview = String(parsed.eventOverview).trim(); }
-      else if(parsed.eventUrl){ overview = String(parsed.eventUrl).trim(); }
-
-      var linksObj = parsed.links;
-      if(!linksObj || typeof linksObj !== 'object' || Array.isArray(linksObj)){
-        alert('Event JSON needs a links object.');
-        return;
-      }
-
-      var lines = [];
-      Object.keys(linksObj).forEach(function(key){
-        var value = String(linksObj[key] || '').trim();
-        if(value){ lines.push(titleCaseSlug(key) + ': ' + value); }
-      });
-
-      if(issueEventSlugEl){ issueEventSlugEl.value = slug; }
-      if(issueEventOverviewEl){ issueEventOverviewEl.value = overview; }
-      if(issuePasteLinksEl){ issuePasteLinksEl.value = lines.join('\n'); }
-      alert('Event fields filled from JSON.');
-    }
-
-    function parseEventConfig(){
-      var raw = (eventConfigEl.value || '').trim();
-      if(!raw){ throw new Error('Add event JSON first.'); }
-      var parsed;
-      try {
-        parsed = JSON.parse(raw);
-      } catch(err) {
-        throw new Error('Event JSON is invalid.');
-      }
-      var eventSlug = slugifySegment(parsed.eventSlug || parsed.slug);
-      if(!eventSlug){ throw new Error('Event JSON needs eventSlug.'); }
-      var eventName = String(parsed.eventName || parsed.name || eventSlug).trim();
-      var eventUrl = parsed.eventUrl ? cleanLink(parsed.eventUrl) : null;
-      if(parsed.eventUrl && !eventUrl){ throw new Error('eventUrl must be a valid URL.'); }
-      var links = parsed.links;
-      if(!links || typeof links !== 'object' || Array.isArray(links)){
-        throw new Error('Event JSON needs a links object.');
-      }
-      var normalizedLinks = [];
-      Object.keys(links).forEach(function(key){
-        var slug = slugifySegment(key);
-        var url = cleanLink(links[key]);
-        if(!slug || !url) return;
-        normalizedLinks.push({ slug: slug, label: titleCaseSlug(key), url: url });
-      });
-      if(normalizedLinks.length === 0){ throw new Error('Add at least one valid link in links.'); }
-      return {
-        eventSlug: eventSlug,
-        eventName: eventName,
-        eventUrl: eventUrl,
-        links: normalizedLinks
-      };
-    }
-
-    function buildEventEntries(config, base, pretty){
-      var eventBasePath = 'r/' + config.eventSlug;
-      var entries = [];
-      if(config.eventUrl){
-        entries.push({
-          label: config.eventName,
-          path: eventBasePath,
-          targetUrl: config.eventUrl,
-          shortUrl: composeShortUrl(base, eventBasePath, pretty)
-        });
-      }
-      for(var i=0;i<config.links.length;i++){
-        var link = config.links[i];
-        var path = eventBasePath + '/' + link.slug;
-        entries.push({
-          label: link.label,
-          path: path,
-          targetUrl: link.url,
-          shortUrl: composeShortUrl(base, path, pretty)
-        });
-      }
-      return entries;
-    }
-
-    function zipPathForShortPath(path, pretty){
-      var clean = String(path || '').replace(/^\//, '').replace(/\/$/, '');
-      if(pretty){
-        return clean + '/index.html';
-      }
-      return /\.html$/i.test(clean) ? clean : clean + '.html';
-    }
-
-    function renderEventSummary(config, entries, base, pretty){
-      var lines = [config.eventName + ' (' + config.eventSlug + ')', ''];
-      if(config.eventUrl){
-        lines.push('Event overview -> ' + composeShortUrl(base, 'r/' + config.eventSlug, pretty));
-      }
-      for(var i=0;i<entries.length;i++){
-        lines.push(entries[i].label + ' -> ' + entries[i].shortUrl);
-      }
-      eventSummaryEl.value = lines.join('\n');
-    }
-
-    function qrImageMarkup(url, size){
-      var px = size || 240;
-      return 'https://api.qrserver.com/v1/create-qr-code/?size=' + px + 'x' + px + '&data=' + encodeURIComponent(url);
-    }
-
-    function renderEventResults(entries){
-      eventResultsEl.innerHTML = '';
-      for(var i=0;i<entries.length;i++){
-        var item = entries[i];
-        var card = document.createElement('article');
-        card.className = 'result-card';
-        var title = document.createElement('h4');
-        title.textContent = item.label;
-        var path = document.createElement('div');
-        path.className = 'small muted mono';
-        path.textContent = item.shortUrl;
-        var img = document.createElement('img');
-        img.alt = item.label + ' QR';
-        img.width = 180;
-        img.height = 180;
-        img.src = qrImageMarkup(item.shortUrl, 180);
-        card.appendChild(title);
-        card.appendChild(path);
-        card.appendChild(img);
-        eventResultsEl.appendChild(card);
-      }
-    }
-
-    function buildEventSheetHTML(config, entries){
-      var cards = entries.map(function(entry){
-        return "<article class='card'><h2>" + entry.label.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') + "</h2><img src='" + qrImageMarkup(entry.shortUrl, 260) + "' alt='QR for " + entry.label.replace(/'/g,'&#39;') + "'><p>" + entry.shortUrl.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') + "</p></article>";
-      }).join('');
-      return "<!doctype html><html lang='en'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width, initial-scale=1'><title>" + config.eventName.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') + " QR Sheet</title><style>:root{--ink:#0f172a;--muted:#475569;--line:#cbd5e1;--bg:#f8fafc}*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;color:var(--ink);background:var(--bg)}main{padding:24px;max-width:1100px;margin:0 auto}h1{margin:0 0 8px}p.lead{margin:0 0 20px;color:var(--muted)}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}.card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:16px;text-align:center;break-inside:avoid}.card h2{margin:0 0 12px;font-size:22px}.card img{width:100%;max-width:260px;height:auto;display:block;margin:0 auto 12px}.card p{margin:0;font-size:13px;word-break:break-word}@media print{body{background:#fff}.card{page-break-inside:avoid}}</style></head><body><main><h1>" + config.eventName.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') + "</h1><p class='lead'>Print this page as a single sign for the event. Each QR points to a hosted short link.</p><section class='grid'>" + cards + "</section></main></body></html>";
-    }
-
-    function buildEventPack(){
-      var base = baseUrlEl.value;
-      var pretty = !!prettyEl.checked;
-      if(!cleanLink(base)){
-        alert('Enter a valid host base URL first.');
-        return;
-      }
-      var config;
-      try {
-        config = parseEventConfig();
-      } catch(err) {
-        alert(err.message);
-        return;
-      }
-      var entries = buildEventEntries(config, base, pretty);
-      renderEventSummary(config, entries, base, pretty);
-      renderEventResults(entries);
-      eventPlacementHintEl.textContent = 'ZIP will include redirect files under ' + config.eventSlug + ' and a printable qr-sheet.html file.';
-
-      var zip = new JSZip();
-      for(var i=0;i<entries.length;i++){
-        var entry = entries[i];
-        zip.file(zipPathForShortPath(entry.path, pretty), generateRedirectHTML(entry.targetUrl));
-      }
-      zip.file(config.eventSlug + '/qr-sheet.html', buildEventSheetHTML(config, entries));
-      zip.generateAsync({type:'blob'}).then(function(content){
-        saveBlob(config.eventSlug + '-event-pack.zip', content);
-      });
-    }
-
-    function buildAndShow(shortPath){
-      var src = cleanLink(srcInput.value.trim());
-      if(!src){ alert('Enter a valid link first.'); return; }
-      var base = baseUrlEl.value; var pretty = !!prettyEl.checked;
-      var shortUrl = composeShortUrl(base, shortPath, pretty);
-      if(!shortUrl){ alert('Enter your host base URL and a short path'); return; }
-      shortLinkInput.value = shortUrl; makeQR(shortUrl);
-      updatePlacementHint(base, shortPath, pretty);
-      var html = generateRedirectHTML(src);
-      if(redirectCodeEl){ redirectCodeEl.value = html; redirectCodeEl.scrollTop = 0; }
-    }
-
-    // UI handlers
-    document.getElementById('apply').onclick = function(){
-      var src = cleanLink(srcInput.value.trim());
-      if(!src){ alert('Enter a valid link'); return; }
-      setIframe(src);
+    document.getElementById('fillFromJson').onclick = fillIssueFormFromJson;
+    document.getElementById('openPrefilledIssue').onclick = function() {
+      window.open(buildPrefilledIssueUrl(), '_blank', 'noopener');
     };
-    var openBtn = document.getElementById('openExt');
-    if(openBtn){
-      openBtn.onclick = function(){
-        var src = cleanLink(srcInput.value.trim());
-        if(!src){ alert('Enter a valid link'); return; }
-        window.open(src, '_blank', 'noopener');
-      };
-    }
-
-    document.getElementById('downloadQR').onclick = function(){
-      if(!qrcode) return;
-      var img = qrWrap.querySelector('img') || qrWrap.querySelector('canvas');
-      if(!img) return;
-      var link = document.createElement('a');
-      link.download = 'link-qr.png';
-      link.href = img.src || img.toDataURL('image/png');
-      link.click();
-    };
-
-    document.getElementById('buildShort').onclick = function(){
-      buildAndShow(shortPathEl.value);
-    };
-
-    document.getElementById('loadEventExample').onclick = function(){
-      eventConfigEl.value = JSON.stringify(EVENT_EXAMPLE, null, 2);
-    };
-
-    document.getElementById('buildEventPack').onclick = function(){
-      buildEventPack();
-    };
-
-    var openShortBtn = document.getElementById('openShort');
-    if(openShortBtn){
-      openShortBtn.onclick = function(){ var u = shortLinkInput.value.trim(); if(u) window.open(u, '_blank', 'noopener'); };
-    }
-
-    var openPrefilledIssueBtn = document.getElementById('openPrefilledIssue');
-    if(openPrefilledIssueBtn){
-      openPrefilledIssueBtn.onclick = function(){
-        window.open(buildPrefilledIssueUrl(), '_blank', 'noopener');
-      };
-    }
-
-    var fillFromJsonBtn = document.getElementById('fillFromJson');
-    if(fillFromJsonBtn){
-      fillFromJsonBtn.onclick = function(){ fillIssueFormFromJson(); };
-    }
-
-    // Quick buttons
-    var quickBtns = document.querySelectorAll('[data-quick]');
-    for(var i=0;i<quickBtns.length;i++){
-      quickBtns[i].onclick = function(){ buildAndShow(this.getAttribute('data-quick')); };
-    }
-
-    // Bulk ZIP (respects Pretty URL setting)
-    document.getElementById('bulkZip').onclick = function(){
-      var src = cleanLink(srcInput.value.trim());
-      if(!src){ alert('Enter a valid link first'); return; }
-      var base = baseUrlEl.value; var pretty = !!prettyEl.checked;
-      var slugsRaw = document.getElementById('bulkSlugs').value || '';
-      var lines = slugsRaw.split(/\r?\n/).map(function(s){ return s.trim(); }).filter(function(s){ return s.length>0; });
-      if(lines.length === 0){ alert('Add at least one slug'); return; }
-      var zip = new JSZip();
-      var html = generateRedirectHTML(src);
-      for(var j=0;j<lines.length;j++){
-        var slug = lines[j].replace(/^\//,'').replace(/\/$/,'');
-        if(pretty){
-          zip.file(slug + '/index.html', html);
-        } else {
-          var name = /\.html$/i.test(slug) ? slug : slug + '.html';
-          zip.file(name, html);
-        }
-      }
-      zip.generateAsync({type:'blob'}).then(function(content){ saveBlob('redirects.zip', content); });
-    };
-
-    sizeSel.onchange = function(){ var src = frame.src; if(src) setIframe(src); };
-
-    // Copy code handler
-    document.getElementById('copyCode').onclick = function(){
-      if(!redirectCodeEl || !redirectCodeEl.value){ alert('Nothing to copy yet. Click "Generate code + QR" first.'); return; }
-      try{
-        navigator.clipboard.writeText(redirectCodeEl.value).then(function(){
-          alert('Code copied to clipboard');
-        }).catch(function(){
-          if(redirectCodeEl.select){ redirectCodeEl.select(); }
-          if(document.execCommand){ document.execCommand('copy'); }
-          alert('Code copied');
-        });
-      }catch(e){
-        if(redirectCodeEl.select){ redirectCodeEl.select(); }
-        alert('Select the text and press Ctrl/Cmd+C to copy.');
-      }
-    };
-
-    // Default host persistence
-    document.getElementById('saveDefaultHost').onclick = function(){
-      var val = baseUrlEl.value.trim();
-      if(!val){ alert('Enter a host base URL first.'); return; }
-      try{ new URL(val); }catch(e){ alert('Enter a valid URL (including https://)'); return; }
-      localStorage.setItem(LS_KEY, val);
-      alert('Saved as default host.');
-    };
-    document.getElementById('resetDefaultHost').onclick = function(){
-      localStorage.removeItem(LS_KEY);
-      baseUrlEl.value = 'https://margauxmedwards.github.io/robocuplinks';
-      alert('Reset to GitHub default.');
-    };
-
-    (function init(){
-      // Default to saved host, then query ?base= override, else GitHub default
-      var saved = localStorage.getItem(LS_KEY);
-      var def = 'https://margauxmedwards.github.io/robocuplinks';
-      var p = new URLSearchParams(location.search);
-      var baseOverride = p.get('base');
-      baseUrlEl.value = baseOverride || saved || def;
-      // If page opened with ?src=, auto-load viewer
-      var src = p.get('src');
-      if(src){ srcInput.value = src; var clean = cleanLink(src); if(clean) setIframe(clean); }
-      // Pretty URL override
-      var prettyParam = p.get('pretty');
-      if(prettyParam !== null){ prettyEl.checked = (prettyParam === '1' || prettyParam === 'true'); }
-      eventConfigEl.value = JSON.stringify(EVENT_EXAMPLE, null, 2);
-    })();
   </script>
 </body>
 </html>
