@@ -1,9 +1,9 @@
 {
   "r/event.html": "https://rcja.app/rcj_cms/?comp=26_QL_BRISB_DE1",
   "r/index.html": "https://rcja.app/rcj_cms/?comp=26_QL_BRISB_DE1",
-  "r/line.html": "https://docs.google.com/spreadsheets/d/e/2PACX-1vTD9NBLztn1vLYIzo0RjOnfRBOsHdr0yQd0eBy4VegK9R5turLKSeEJ5zfMILl-b2s_UyXG5NxAgbx1/pubhtml",
-  "r/maze.html": "https://docs.google.com/spreadsheets/d/e/2PACX-1vTf1BkTE_Sy_kBOLcJTNd5LTe6gxqI744tSiGIJAulDk52ZuRCMq4RGzYhUq7xgnx6IU2qdOVF0ddj7/pubhtml",
-  "r/onstage.html": "https://docs.google.com/spreadsheets/d/e/2PACX-1vQVyAJfYpdJh0QOxlrIjwHVj_hXh6EDuUAcIaWRHFbXnEg3OHzkxPVAnSBvFtZxNoACjU9nyi80osPt/pubhtml",
-  "r/soccer.html": "https://docs.google.com/spreadsheets/d/e/2PACX-1vRKn0a0VWfFk7gZIEfjLUdwySGoCXvmqDCbuA-A3lITZpcrjgbU5xHV6gMnLapCzj1gJsjmBY3J0669/pubhtml",
-  "r/sumo.html": "https://docs.google.com/spreadsheets/d/e/2PACX-1vQb51lh0SC53JJuHZgGgL9gHk_40RUCnS02aGK5Akceo07a7yh1fCZW4uG-gCd_Yesla8MyfPf6MFW7/pubhtml"
+  "r/line.html": "https://www.robocupjunior.org.au/rescue-line/",
+  "r/maze.html": "https://www.robocupjunior.org.au/rescue-maze/",
+  "r/onstage.html": "https://www.robocupjunior.org.au/onstage/",
+  "r/soccer.html": "https://www.robocupjunior.org.au/soccer/",
+  "r/sumo.html": "https://www.robocupjunior.org.au/rcjq-sumo/"
 }
