@@ -369,6 +369,7 @@
           <div class="btn-spinner"></div>
           <span class="btn-label">Open prefilled GitHub issue</span>
         </button>
+        <button class="btn btn-secondary" id="openDispatch" type="button">Open password-protected dispatch</button>
         <button class="btn btn-secondary" id="clearForm" type="button">Clear form</button>
       </div>
     </div>
@@ -537,6 +538,14 @@
         btn.classList.remove('loading');
         btn.disabled = false;
       }
+    };
+
+    /* ── Open manual workflow dispatch ── */
+    document.getElementById('openDispatch').onclick = function() {
+      window.open('https://github.com/margauxmedwards/robocuplinks/actions/workflows/dispatch-event-links.yml', '_blank', 'noopener');
+      showStatus('info', '🔐',
+        'Opened password-protected workflow dispatch. Paste your field values there and submit with the admin password.'
+      );
     };
   </script>
 </body>
