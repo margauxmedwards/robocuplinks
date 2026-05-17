@@ -302,7 +302,7 @@
       <div class="card-body field-gap">
 
         <!-- Password authentication -->
-        <div class="field-wrap">
+        <div class="field-wrap" id="passwordFieldWrap">
           <label class="field-label" for="adminPassword">Admin password <span class="req">*</span></label>
           <input id="adminPassword" type="password" placeholder="Enter admin password" autocomplete="current-password" />
           <span class="field-hint">Verified by the bot endpoint and never stored in the browser.</span>
@@ -428,12 +428,21 @@
 
     var REPO = getRepoContext();
     var repoSlug = REPO.owner + '/' + REPO.repo;
-    var workflowRunsUrl = 'https://github.com/' + repoSlug + '/actions/workflows/dispatch-event-links.yml';
-    document.getElementById('workflowRunsLink').href = workflowRunsUrl;
+    var dispatchRunsUrl = 'https://github.com/' + repoSlug + '/actions/workflows/dispatch-event-links.yml';
+    var issueRunsUrl = 'https://github.com/' + repoSlug + '/actions/workflows/apply-event-links-from-issue.yml';
 
     // Set this in production to your deployed bot endpoint URL.
     // Example: https://robocup-links-bot.YOUR-SUBDOMAIN.workers.dev/submit-event-links
     var BOT_ENDPOINT = window.RCLINKS_BOT_ENDPOINT || '';
+    var BOT_MODE = Boolean(BOT_ENDPOINT);
+    var workflowRunsUrl = BOT_MODE ? dispatchRunsUrl : issueRunsUrl;
+    document.getElementById('workflowRunsLink').href = workflowRunsUrl;
+
+    if (!BOT_MODE) {
+      document.getElementById('passwordFieldWrap').style.display = 'none';
+      document.querySelector('.card-subtitle').textContent = 'Bot endpoint is not configured. Falling back to prefilled GitHub issue mode.';
+      document.querySelector('#submitIssue .btn-label').textContent = 'Open prefilled GitHub issue';
+    }
 
     function slugifySegment(input) {
       return String(input || '').trim().toLowerCase()
@@ -508,18 +517,62 @@
         document.getElementById('issueEventSlug').focus();
         return;
       }
-      if (!password) {
-        showStatus('error', '✕', 'Admin password is required.');
-        document.getElementById('adminPassword').focus();
-        return;
-      }
-      if (!BOT_ENDPOINT) {
-        showStatus('error', '✕', 'Bot endpoint is not configured. Set <code>window.RCLINKS_BOT_ENDPOINT</code> in this page.');
-        return;
-      }
 
       btn.classList.add('loading');
       btn.disabled = true;
+
+      function fallback(value) { return value ? value : '_No response_'; }
+      var pasteLines = [];
+      if (lineUrl)    { pasteLines.push('Line: '    + lineUrl); }
+      if (mazeUrl)    { pasteLines.push('Maze: '    + mazeUrl); }
+      if (onstageUrl) { pasteLines.push('Onstage: ' + onstageUrl); }
+      if (soccerUrl)  { pasteLines.push('Soccer: '  + soccerUrl); }
+      if (sumoUrl)    { pasteLines.push('Sumo: '    + sumoUrl); }
+
+      var issueBody = [
+        '### Event slug', slug, '',
+        '### Event overview URL', fallback(overview), '',
+        '### Paste links (Name: URL)', pasteLines.length ? pasteLines.join('\n') : '_No response_', '',
+        '### Line URL', fallback(lineUrl), '',
+        '### Maze URL', fallback(mazeUrl), '',
+        '### OnStage URL', fallback(onstageUrl), '',
+        '### Soccer URL', fallback(soccerUrl), '',
+        '### Sumo URL', fallback(sumoUrl), '',
+        '### Extra links', '_No response_'
+      ].join('\n');
+
+      if (!BOT_MODE) {
+        showStatus('info', '⏳', 'Opening prefilled issue form…');
+        var params = new URLSearchParams({
+          title: 'Event links: ' + slug,
+          labels: 'event-links',
+          body: issueBody
+        });
+        var newIssueUrl = 'https://github.com/' + repoSlug + '/issues/new?' + params.toString();
+        try {
+          window.open(newIssueUrl, '_blank', 'noopener');
+          showStatus('success', '✓',
+            'Opened prefilled issue for <strong>' + slug + '</strong>. '
+            + 'Submit the issue to trigger automation. '
+            + '<a href="' + workflowRunsUrl + '" target="_blank" rel="noopener">Watch runs ↗</a>'
+          );
+        } catch (err) {
+          showStatus('error', '✕', 'Unable to open issue form: ' + err.message);
+        } finally {
+          btn.classList.remove('loading');
+          btn.disabled = false;
+        }
+        return;
+      }
+
+      if (!password) {
+        showStatus('error', '✕', 'Admin password is required.');
+        document.getElementById('adminPassword').focus();
+        btn.classList.remove('loading');
+        btn.disabled = false;
+        return;
+      }
+
       showStatus('info', '⏳', 'Triggering deployment workflow…');
 
       var payload = {

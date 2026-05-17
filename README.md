@@ -1,13 +1,15 @@
 # RoboCup Links Automation
 
-This repo supports a bot-backed process:
+This repo supports two submission modes:
 
 1. Open the admin page.
 2. Fill links (or paste JSON) and submit.
-3. A bot endpoint triggers the workflow.
-4. GitHub Actions updates canonical short links and commits changes.
+3. If bot endpoint is configured: bot triggers dispatch workflow.
+4. If bot endpoint is not configured: page opens a prefilled GitHub issue.
+5. GitHub Actions updates canonical short links and commits changes.
 
-The browser never stores a GitHub token and submissions are not tied to the submitter's GitHub profile.
+In bot mode, the browser never stores a GitHub token and submissions are not tied to the submitter's GitHub profile.
+In fallback issue mode, submissions are tied to the GitHub account that opens/submits the issue.
 
 ## Canonical links (stable)
 
@@ -36,6 +38,11 @@ Existing QR PNG files are treated as long-lived assets and are not regenerated d
 Deploy the Worker in `workers/submit-event-links-worker.js` and configure `window.RCLINKS_BOT_ENDPOINT` in `index.html`.
 
 Detailed setup steps are in `workers/README.md`.
+
+### Password behavior
+
+- Bot mode (`window.RCLINKS_BOT_ENDPOINT` set): password is required.
+- Fallback issue mode (no endpoint configured): password is not required.
 
 ## Environment
 
