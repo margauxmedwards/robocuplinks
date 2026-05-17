@@ -304,11 +304,6 @@
         <!-- Slug + Overview -->
         <div class="grid-2">
           <div class="field-wrap">
-            <label class="field-label" for="adminPassword">Admin password</label>
-            <input id="adminPassword" type="password" placeholder="Enter admin password" autocomplete="current-password" />
-            <span class="field-hint">Used for password-protected manual dispatch only. It is never added to issue text.</span>
-          </div>
-          <div class="field-wrap">
             <label class="field-label" for="issueEventSlug">Event slug <span class="req">*</span></label>
             <input id="issueEventSlug" type="text" placeholder="bne-2026" />
             <span class="field-hint">e.g. bne-2026 → /r/bne-2026/</span>
@@ -456,7 +451,7 @@
 
     /* ── Clear form ── */
     document.getElementById('clearForm').onclick = function() {
-      ['adminPassword','issueEventSlug','issueEventOverview','linkLine','linkMaze','linkOnstage','linkSoccer','linkSumo','issueJsonInput']
+      ['issueEventSlug','issueEventOverview','linkLine','linkMaze','linkOnstage','linkSoccer','linkSumo','issueJsonInput']
         .forEach(function(id){ document.getElementById(id).value = ''; });
       hideStatus();
     };
