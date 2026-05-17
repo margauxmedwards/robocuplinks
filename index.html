@@ -295,7 +295,7 @@
         <div class="card-icon green">🔗</div>
         <div>
           <div class="card-title">Submit Event Links</div>
-          <div class="card-subtitle">Opens a prefilled GitHub issue. The workflow applies and deploys changes automatically.</div>
+          <div class="card-subtitle">Fill in the links and open the password-protected workflow dispatch to trigger automation.</div>
         </div>
       </div>
 
@@ -365,11 +365,7 @@
       </div>
 
       <div class="action-bar">
-        <button class="btn btn-primary" id="submitIssue" type="button">
-          <div class="btn-spinner"></div>
-          <span class="btn-label">Open prefilled GitHub issue</span>
-        </button>
-        <button class="btn btn-secondary" id="openDispatch" type="button">Open password-protected dispatch</button>
+        <button class="btn btn-primary" id="openDispatch" type="button">Open password-protected dispatch</button>
         <button class="btn btn-secondary" id="clearForm" type="button">Clear form</button>
       </div>
     </div>
@@ -457,47 +453,49 @@
     };
 
     /* ── Submit via prefilled GitHub issue form ── */
-    document.getElementById('submitIssue').onclick = async function() {
-      var btn  = this;
-      var slug = slugifySegment(document.getElementById('issueEventSlug').value);
-      var overview = (document.getElementById('issueEventOverview').value || '').trim();
-      var lineUrl = (document.getElementById('linkLine').value || '').trim();
-      var mazeUrl = (document.getElementById('linkMaze').value || '').trim();
-      var onstageUrl = (document.getElementById('linkOnstage').value || '').trim();
-      var soccerUrl = (document.getElementById('linkSoccer').value || '').trim();
-      var sumoUrl = (document.getElementById('linkSumo').value || '').trim();
+    var submitBtn = document.getElementById('submitIssue');
+    if (submitBtn) {
+      submitBtn.onclick = async function() {
+        var btn  = this;
+        var slug = slugifySegment(document.getElementById('issueEventSlug').value);
+        var overview = (document.getElementById('issueEventOverview').value || '').trim();
+        var lineUrl = (document.getElementById('linkLine').value || '').trim();
+        var mazeUrl = (document.getElementById('linkMaze').value || '').trim();
+        var onstageUrl = (document.getElementById('linkOnstage').value || '').trim();
+        var soccerUrl = (document.getElementById('linkSoccer').value || '').trim();
+        var sumoUrl = (document.getElementById('linkSumo').value || '').trim();
 
-      if (!slug) {
-        showStatus('error', '✕', 'Event slug is required.');
-        document.getElementById('issueEventSlug').focus();
-        return;
-      }
+        if (!slug) {
+          showStatus('error', '✕', 'Event slug is required.');
+          document.getElementById('issueEventSlug').focus();
+          return;
+        }
 
-      btn.classList.add('loading');
-      btn.disabled = true;
-      showStatus('info', '⏳', 'Opening prefilled issue form…');
+        btn.classList.add('loading');
+        btn.disabled = true;
+        showStatus('info', '⏳', 'Opening prefilled issue form…');
 
-      function fallback(value) {
-        return value ? value : '_No response_';
-      }
+        function fallback(value) {
+          return value ? value : '_No response_';
+        }
 
-      var pasteLines = [];
-      if (lineUrl) { pasteLines.push('Line: ' + lineUrl); }
-      if (mazeUrl) { pasteLines.push('Maze: ' + mazeUrl); }
-      if (onstageUrl) { pasteLines.push('Onstage: ' + onstageUrl); }
-      if (soccerUrl) { pasteLines.push('Soccer: ' + soccerUrl); }
-      if (sumoUrl) { pasteLines.push('Sumo: ' + sumoUrl); }
+        var pasteLines = [];
+        if (lineUrl) { pasteLines.push('Line: ' + lineUrl); }
+        if (mazeUrl) { pasteLines.push('Maze: ' + mazeUrl); }
+        if (onstageUrl) { pasteLines.push('Onstage: ' + onstageUrl); }
+        if (soccerUrl) { pasteLines.push('Soccer: ' + soccerUrl); }
+        if (sumoUrl) { pasteLines.push('Sumo: ' + sumoUrl); }
 
-      var issueBody = [
-        '### Event slug',
-        slug,
-        '',
-        '### Event overview URL',
-        fallback(overview),
-        '',
-        '### Paste links (Name: URL)',
-        pasteLines.length ? pasteLines.join('\n') : '_No response_',
-        '',
+        var issueBody = [
+          '### Event slug',
+          slug,
+          '',
+          '### Event overview URL',
+          fallback(overview),
+          '',
+          '### Paste links (Name: URL)',
+          pasteLines.length ? pasteLines.join('\n') : '_No response_',
+          '',
         '### Line URL',
         fallback(lineUrl),
         '',
@@ -538,13 +536,14 @@
         btn.classList.remove('loading');
         btn.disabled = false;
       }
-    };
+      };
+    }
 
     /* ── Open manual workflow dispatch ── */
     document.getElementById('openDispatch').onclick = function() {
       window.open('https://github.com/margauxmedwards/robocuplinks/actions/workflows/dispatch-event-links.yml', '_blank', 'noopener');
-      showStatus('info', '🔐',
-        'Opened password-protected workflow dispatch. Paste your field values there and submit with the admin password.'
+      showStatus('success', '🔐',
+        'Opened password-protected workflow dispatch. Enter the admin password and paste your field values there.'
       );
     };
   </script>
