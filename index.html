@@ -459,6 +459,12 @@
     document.getElementById('submitIssue').onclick = async function() {
       var btn  = this;
       var slug = slugifySegment(document.getElementById('issueEventSlug').value);
+      var overview = (document.getElementById('issueEventOverview').value || '').trim();
+      var lineUrl = (document.getElementById('linkLine').value || '').trim();
+      var mazeUrl = (document.getElementById('linkMaze').value || '').trim();
+      var onstageUrl = (document.getElementById('linkOnstage').value || '').trim();
+      var soccerUrl = (document.getElementById('linkSoccer').value || '').trim();
+      var sumoUrl = (document.getElementById('linkSumo').value || '').trim();
 
       if (!slug) {
         showStatus('error', '✕', 'Event slug is required.');
@@ -470,16 +476,50 @@
       btn.disabled = true;
       showStatus('info', '⏳', 'Opening prefilled issue form…');
 
+      function fallback(value) {
+        return value ? value : '_No response_';
+      }
+
+      var pasteLines = [];
+      if (lineUrl) { pasteLines.push('Line: ' + lineUrl); }
+      if (mazeUrl) { pasteLines.push('Maze: ' + mazeUrl); }
+      if (onstageUrl) { pasteLines.push('Onstage: ' + onstageUrl); }
+      if (soccerUrl) { pasteLines.push('Soccer: ' + soccerUrl); }
+      if (sumoUrl) { pasteLines.push('Sumo: ' + sumoUrl); }
+
+      var issueBody = [
+        '### Event slug',
+        slug,
+        '',
+        '### Event overview URL',
+        fallback(overview),
+        '',
+        '### Paste links (Name: URL)',
+        pasteLines.length ? pasteLines.join('\n') : '_No response_',
+        '',
+        '### Line URL',
+        fallback(lineUrl),
+        '',
+        '### Maze URL',
+        fallback(mazeUrl),
+        '',
+        '### OnStage URL',
+        fallback(onstageUrl),
+        '',
+        '### Soccer URL',
+        fallback(soccerUrl),
+        '',
+        '### Sumo URL',
+        fallback(sumoUrl),
+        '',
+        '### Extra links',
+        '_No response_'
+      ].join('\n');
+
       var params = new URLSearchParams({
-        template: 'new-event-links.yml',
         title: 'Event links: ' + slug,
-        event_slug: slug,
-        event_overview: (document.getElementById('issueEventOverview').value || '').trim(),
-        line: (document.getElementById('linkLine').value || '').trim(),
-        maze: (document.getElementById('linkMaze').value || '').trim(),
-        onstage: (document.getElementById('linkOnstage').value || '').trim(),
-        soccer: (document.getElementById('linkSoccer').value || '').trim(),
-        sumo: (document.getElementById('linkSumo').value || '').trim()
+        labels: 'event-links',
+        body: issueBody
       });
 
       var issueUrl = 'https://github.com/margauxmedwards/robocuplinks/issues/new?' + params.toString();
