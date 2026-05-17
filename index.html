@@ -104,52 +104,6 @@
     .card-subtitle { font-size: 13px; color: var(--muted); margin-top: 2px; }
     .card-body { padding: 20px 22px; }
 
-    /* ── Token section ── */
-    .token-row {
-      display: flex;
-      gap: 10px;
-      align-items: flex-end;
-    }
-    .token-row .field-wrap { flex: 1; }
-    .token-saved-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      font-size: 12px;
-      font-weight: 500;
-      color: var(--accent);
-      background: var(--accent-light);
-      border-radius: 20px;
-      padding: 3px 10px;
-    }
-    .token-hint {
-      font-size: 12px;
-      color: var(--muted);
-      margin-top: 6px;
-      line-height: 1.5;
-    }
-    .token-hint a { color: var(--info); }
-    /* ── Setup toggle (collapsed by default) ── */
-    .setup-toggle {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--muted);
-      cursor: pointer;
-      user-select: none;
-      border: none;
-      background: none;
-      padding: 0;
-      margin-bottom: 0;
-    }
-    .setup-toggle:hover { color: var(--ink); }
-    .setup-toggle-arrow { transition: transform 0.2s; font-size: 11px; }
-    .setup-toggle.open .setup-toggle-arrow { transform: rotate(90deg); }
-    .setup-section { display: none; margin-top: 14px; }
-    .setup-section.open { display: block; }
-
     /* ── Form fields ── */
     .field-wrap { display: flex; flex-direction: column; gap: 5px; }
     .field-label {
@@ -309,7 +263,6 @@
     /* ── Responsive ── */
     @media (max-width: 600px) {
       .grid-2 { grid-template-columns: 1fr; }
-      .token-row { flex-direction: column; }
       .card-header { flex-direction: column; gap: 10px; }
     }
   </style>
@@ -335,44 +288,14 @@
   </header>
 
   <main>
-
-    <!-- ── GitHub Token ── -->
-    <!-- ── Setup (dispatch token, collapsed) ── -->
-    <p class="section-label">Setup</p>
-    <div class="card">
-      <div class="card-body">
-        <button class="setup-toggle" id="setupToggle" type="button">
-          <span class="setup-toggle-arrow">▶</span>
-          Dispatch token (one-time setup)
-          <span id="setupBadge" style="display:none; margin-left:6px;" class="token-saved-badge">✓ Saved</span>
-        </button>
-        <div class="setup-section" id="setupSection">
-          <p class="token-hint" style="margin-bottom:10px">
-            A fine-grained PAT with <strong>Actions: Read &amp; write</strong> on this repo only — nothing else.
-            This is used once to trigger the workflow; the actual git work uses the repo's built-in token.
-            Stored in <code>sessionStorage</code> (cleared when you close this tab).
-            <a href="https://github.com/settings/tokens?type=beta" target="_blank" rel="noopener">Create a fine-grained token ↗</a>
-          </p>
-          <div class="token-row">
-            <div class="field-wrap">
-              <label class="field-label" for="ghDispatchToken">Fine-grained Actions token</label>
-              <input id="ghDispatchToken" type="password" placeholder="github_pat_xxxxxxxxxxxx" autocomplete="off" spellcheck="false" />
-            </div>
-            <button class="btn btn-secondary" id="saveDispatchToken" type="button">Save</button>
-            <button class="btn btn-ghost" id="clearDispatchToken" type="button" title="Clear">✕</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <!-- ── Create Event Issue ── -->
-    <p class="section-label" style="margin-top:24px">Create event</p>
+    <p class="section-label">Create event</p>
     <div class="card">
       <div class="card-header">
         <div class="card-icon green">🔗</div>
         <div>
           <div class="card-title">Submit Event Links</div>
-          <div class="card-subtitle">Triggers the deployment workflow directly. Changes are deployed automatically — no GitHub tab needed.</div>
+          <div class="card-subtitle">Opens a prefilled GitHub issue. The workflow applies and deploys changes automatically.</div>
         </div>
       </div>
 
@@ -417,14 +340,6 @@
         </div>
 
         <!-- JSON import (collapsed) -->
-                <!-- Password -->
-                <div class="field-wrap">
-                  <label class="field-label" for="adminPassword">Admin password <span class="req">*</span></label>
-                  <input id="adminPassword" type="password" placeholder="Enter admin password" autocomplete="current-password" />
-                  <span class="field-hint">Verified server-side against <code>ADMIN_PASSWORD</code> secret — never stored.</span>
-                </div>
-
-                <!-- JSON import (collapsed) -->
         <div>
           <button class="json-toggle" id="jsonToggle" type="button">
             <span class="json-toggle-arrow">▶</span>
@@ -452,7 +367,7 @@
       <div class="action-bar">
         <button class="btn btn-primary" id="submitIssue" type="button">
           <div class="btn-spinner"></div>
-          <span class="btn-label">Deploy event links</span>
+          <span class="btn-label">Open prefilled GitHub issue</span>
         </button>
         <button class="btn btn-secondary" id="clearForm" type="button">Clear form</button>
       </div>
@@ -492,40 +407,6 @@
       return String(input || '').split(/[-_\s]+/).filter(Boolean)
         .map(function(p){ return p.charAt(0).toUpperCase() + p.slice(1); }).join(' ');
     }
-
-    /* ── Token management ── */
-    /* ── Setup toggle ── */
-    document.getElementById('setupToggle').onclick = function() {
-      this.classList.toggle('open');
-      document.getElementById('setupSection').classList.toggle('open');
-    };
-
-    /* ── Dispatch token (one-time setup, sessionStorage) ── */
-    var DISPATCH_TOKEN_KEY = 'rclinks_dispatch_token';
-
-    function loadDispatchToken() {
-      var t = sessionStorage.getItem(DISPATCH_TOKEN_KEY) || '';
-      if (t) {
-        document.getElementById('ghDispatchToken').value = t;
-        document.getElementById('setupBadge').style.display = 'inline-flex';
-      }
-    }
-    function saveDispatchToken() {
-      var t = (document.getElementById('ghDispatchToken').value || '').trim();
-      if (!t) { showStatus('error', '✕', 'Enter a dispatch token first.'); return; }
-      sessionStorage.setItem(DISPATCH_TOKEN_KEY, t);
-      document.getElementById('setupBadge').style.display = 'inline-flex';
-      showStatus('info', 'ℹ️', 'Dispatch token saved for this session.');
-    }
-    function clearDispatchToken() {
-      sessionStorage.removeItem(DISPATCH_TOKEN_KEY);
-      document.getElementById('ghDispatchToken').value = '';
-      document.getElementById('setupBadge').style.display = 'none';
-      showStatus('info', 'ℹ️', 'Dispatch token cleared.');
-    }
-    document.getElementById('saveDispatchToken').onclick = saveDispatchToken;
-    document.getElementById('clearDispatchToken').onclick = clearDispatchToken;
-    loadDispatchToken();
 
     /* ── JSON toggle ── */
     document.getElementById('jsonToggle').onclick = function() {
@@ -569,84 +450,49 @@
 
     /* ── Clear form ── */
     document.getElementById('clearForm').onclick = function() {
-      ['issueEventSlug','issueEventOverview','linkLine','linkMaze','linkOnstage','linkSoccer','linkSumo','issueJsonInput','adminPassword']
+      ['issueEventSlug','issueEventOverview','linkLine','linkMaze','linkOnstage','linkSoccer','linkSumo','issueJsonInput']
         .forEach(function(id){ document.getElementById(id).value = ''; });
       hideStatus();
     };
 
-    /* ── Build issue body (same format the workflow expects) ── */
-    /* ── Submit via workflow_dispatch ── */
+    /* ── Submit via prefilled GitHub issue form ── */
     document.getElementById('submitIssue').onclick = async function() {
-      var btn      = this;
-      var slug     = slugifySegment(document.getElementById('issueEventSlug').value);
-      var password = (document.getElementById('adminPassword').value || '').trim();
+      var btn  = this;
+      var slug = slugifySegment(document.getElementById('issueEventSlug').value);
 
       if (!slug) {
         showStatus('error', '✕', 'Event slug is required.');
         document.getElementById('issueEventSlug').focus();
         return;
       }
-      if (!password) {
-        showStatus('error', '✕', 'Admin password is required.');
-        document.getElementById('adminPassword').focus();
-        return;
-      }
-
-      var dispatchToken = (sessionStorage.getItem(DISPATCH_TOKEN_KEY) || '').trim();
-      if (!dispatchToken) {
-        showStatus('error', '✕', 'A dispatch token is required. Expand <strong>Setup</strong> above and save one first.');
-        document.getElementById('setupToggle').classList.add('open');
-        document.getElementById('setupSection').classList.add('open');
-        document.getElementById('ghDispatchToken').focus();
-        return;
-      }
 
       btn.classList.add('loading');
       btn.disabled = true;
-      showStatus('info', '⏳', 'Triggering deployment workflow…');
+      showStatus('info', '⏳', 'Opening prefilled issue form…');
 
-      var apiUrl = 'https://api.github.com/repos/margauxmedwards/robocuplinks/actions/workflows/dispatch-event-links.yml/dispatches';
-
-      var inputs = {
-        password:       password,
-        event_slug:     slug,
+      var params = new URLSearchParams({
+        template: 'new-event-links.yml',
+        title: 'Event links: ' + slug,
+        event_slug: slug,
         event_overview: (document.getElementById('issueEventOverview').value || '').trim(),
-        line_url:       (document.getElementById('linkLine').value    || '').trim(),
-        maze_url:       (document.getElementById('linkMaze').value    || '').trim(),
-        onstage_url:    (document.getElementById('linkOnstage').value || '').trim(),
-        soccer_url:     (document.getElementById('linkSoccer').value  || '').trim(),
-        sumo_url:       (document.getElementById('linkSumo').value    || '').trim()
-      };
+        line: (document.getElementById('linkLine').value || '').trim(),
+        maze: (document.getElementById('linkMaze').value || '').trim(),
+        onstage: (document.getElementById('linkOnstage').value || '').trim(),
+        soccer: (document.getElementById('linkSoccer').value || '').trim(),
+        sumo: (document.getElementById('linkSumo').value || '').trim()
+      });
+
+      var issueUrl = 'https://github.com/margauxmedwards/robocuplinks/issues/new?' + params.toString();
 
       try {
-        var resp = await fetch(apiUrl, {
-          method: 'POST',
-          headers: {
-            'Authorization': 'Bearer ' + dispatchToken,
-            'Accept': 'application/vnd.github+json',
-            'Content-Type': 'application/json',
-            'X-GitHub-Api-Version': '2022-11-28'
-          },
-          body: JSON.stringify({ ref: 'main', inputs: inputs })
-        });
-
-        if (resp.status === 204) {
-          document.getElementById('adminPassword').value = '';
-          showStatus('success', '✓',
-            'Workflow triggered for <strong>' + slug + '</strong>. '
-            + '<a href="https://github.com/margauxmedwards/robocuplinks/actions/workflows/dispatch-event-links.yml" target="_blank" rel="noopener">Watch progress ↗</a>'
-          );
-        } else {
-          var data = {};
-          try { data = await resp.json(); } catch(e) {}
-          var msg = (data && data.message) ? data.message : 'HTTP ' + resp.status;
-          if (resp.status === 401 || resp.status === 403) {
-            msg = 'Invalid or insufficient dispatch token. Ensure it has <strong>Actions: Read &amp; write</strong> scope.';
-          }
-          showStatus('error', '✕', 'GitHub API error: ' + msg);
-        }
+        window.open(issueUrl, '_blank', 'noopener');
+        showStatus('success', '✓',
+          'Opened prefilled issue for <strong>' + slug + '</strong>. '
+          + 'Submit the issue to trigger automation. '
+          + '<a href="https://github.com/margauxmedwards/robocuplinks/actions/workflows/apply-event-links-from-issue.yml" target="_blank" rel="noopener">Watch runs ↗</a>'
+        );
       } catch (err) {
-        showStatus('error', '✕', 'Network error: ' + err.message);
+        showStatus('error', '✕', 'Unable to open GitHub issue form: ' + err.message);
       } finally {
         btn.classList.remove('loading');
         btn.disabled = false;
