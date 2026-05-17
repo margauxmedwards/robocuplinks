@@ -85,7 +85,21 @@ Each new event overwrites these same canonical paths so existing QR codes keep w
 To regenerate redirect files manually:
 
 ```bash
-python3 scripts/update_redirects.py --config redirects.json
+pixi run update-redirects
 ```
 
 The command now regenerates both redirect HTML and static QR image files.
+
+## Environment management (Pixi)
+
+This repo uses `pixi.toml` for a reproducible Python environment in both local development and GitHub Actions.
+
+- Install Pixi once: https://pixi.sh/latest/
+- Run scripts inside Pixi:
+
+```bash
+pixi run python scripts/apply_event_from_issue.py --issue-body issue-body.md --redirects redirects.json
+pixi run update-redirects
+```
+
+This avoids runtime drift (for example Python 3.14 vs Pillow wheel compatibility) because the workflows and local runs share the same pinned environment.

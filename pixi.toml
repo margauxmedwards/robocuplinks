@@ -1,0 +1,16 @@
+[project]
+name = "robocuplinks"
+version = "0.1.0"
+channels = ["conda-forge"]
+platforms = ["linux-64", "osx-64", "osx-arm64", "win-64"]
+
+[dependencies]
+python = "3.12.*"
+pip = "*"
+
+[pypi-dependencies]
+qrcode = { version = "==7.4.2", extras = ["pil"] }
+pillow = "==10.4.0"
+
+[tasks]
+update-redirects = "python scripts/update_redirects.py --config redirects.json"
