@@ -64,21 +64,77 @@ jobs:
           git push
           echo "changed=true" >> "$GITHUB_OUTPUT"
 
+      - name: Verify generated links are live
+        id: verify
+        if: steps.commit.outputs.changed == 'true'
+        continue-on-error: true
+        env:
+          BASE_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}
+          UPDATED_PATHS: ${{ steps.apply.outputs.updated_paths }}
+        run: |
+          failures=""
+          IFS=',' read -ra paths <<< "$UPDATED_PATHS"
+
+          for raw_path in "${paths[@]}"; do
+            path="${raw_path# }"
+            path="${path#/}"
+            if [[ -z "$path" ]]; then
+              continue
+            fi
+
+            if [[ "$path" == */index.html ]]; then
+              url="$BASE_URL/${path%index.html}"
+            else
+              url="$BASE_URL/$path"
+            fi
+
+            ok=false
+            for attempt in {1..12}; do
+              code="$(curl -s -o /dev/null -w "%{http_code}" "$url" || echo "000")"
+              if [[ "$code" != "404" && "$code" != "000" ]]; then
+                echo "PASS $url ($code)"
+                ok=true
+                break
+              fi
+              echo "WAIT $url ($code) attempt=$attempt"
+              sleep 10
+            done
+
+            if [[ "$ok" != "true" ]]; then
+              failures+="$url,"
+            fi
+          done
+
+          failures="${failures%,}"
+          echo "failed_urls=$failures" >> "$GITHUB_OUTPUT"
+          if [[ -n "$failures" ]]; then
+            exit 1
+          fi
+
       - name: Comment on issue
         uses: actions/github-script@v7
         with:
           script: |
             const changed = '${{ steps.commit.outputs.changed }}' === 'true';
+            const verifyOk = '${{ steps.verify.outcome }}' === 'success';
             const slug = '${{ steps.apply.outputs.event_slug }}';
             const paths = '${{ steps.apply.outputs.updated_paths }}'
               .split(',')
               .filter(Boolean)
               .map((p) => `- ${p}`)
               .join('\n');
+            const failedUrls = '${{ steps.verify.outputs.failed_urls }}'
+              .split(',')
+              .filter(Boolean)
+              .map((u) => `- ${u}`)
+              .join('\n');
 
-            const body = changed
-              ? `Updated event links for **${slug}** and committed the generated redirect files.\n\nUpdated paths:\n${paths}`
-              : `No file changes were needed for **${slug}**.`;
+            let body = `No file changes were needed for **${slug}**.`;
+            if (changed && verifyOk) {
+              body = `Updated event links for **${slug}**, committed generated files, and verified short links are live.\n\nUpdated paths:\n${paths}`;
+            } else if (changed && !verifyOk) {
+              body = `Updated event links for **${slug}** and committed generated files, but one or more short links still returned 404 during automated checks. The issue remains open.\n\nUpdated paths:\n${paths}\n\nFailed URLs:\n${failedUrls || '- (none captured)'}`;
+            }
 
             await github.rest.issues.createComment({
               owner: context.repo.owner,
@@ -88,7 +144,7 @@ jobs:
             });
 
       - name: Close issue after success
-        if: steps.commit.outputs.changed == 'true'
+        if: steps.commit.outputs.changed == 'true' && steps.verify.outcome == 'success'
         uses: actions/github-script@v7
         with:
           script: |
@@ -99,3 +155,9 @@ jobs:
               state: 'closed',
               state_reason: 'completed',
             });
+
+      - name: Fail workflow if link checks fail
+        if: steps.commit.outputs.changed == 'true' && steps.verify.outcome == 'failure'
+        run: |
+          echo "One or more generated short links returned 404 after retries."
+          exit 1
