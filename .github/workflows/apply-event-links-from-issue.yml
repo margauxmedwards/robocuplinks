@@ -118,9 +118,11 @@ jobs:
             const changed = '${{ steps.commit.outputs.changed }}' === 'true';
             const verifyOk = '${{ steps.verify.outcome }}' === 'success';
             const slug = '${{ steps.apply.outputs.event_slug }}';
-            const paths = '${{ steps.apply.outputs.updated_paths }}'
+            const updatedPaths = '${{ steps.apply.outputs.updated_paths }}'
               .split(',')
-              .filter(Boolean)
+              .map((p) => p.trim())
+              .filter(Boolean);
+            const paths = updatedPaths
               .map((p) => `- ${p}`)
               .join('\n');
             const failedUrls = '${{ steps.verify.outputs.failed_urls }}'
@@ -128,12 +130,18 @@ jobs:
               .filter(Boolean)
               .map((u) => `- ${u}`)
               .join('\n');
+            const qrBase = `https://${context.repo.owner}.github.io/${context.repo.repo}/qr/`;
+            const qrUrls = updatedPaths
+              .filter((p) => p.toLowerCase().endsWith('.html'))
+              .map((p) => `${qrBase}${p.replace(/^\/+/, '').replace(/\.html$/i, '.png')}`)
+              .map((u) => `- ${u}`)
+              .join('\n');
 
             let body = `No file changes were needed for **${slug}**.`;
             if (changed && verifyOk) {
-              body = `Updated event links for **${slug}**, committed generated files, and verified short links are live.\n\nUpdated paths:\n${paths}`;
+              body = `Updated event links for **${slug}**, committed generated files, and verified short links are live.\n\nUpdated paths:\n${paths}\n\nQR code links:\n${qrUrls || '- (none generated)'}`;
             } else if (changed && !verifyOk) {
-              body = `Updated event links for **${slug}** and committed generated files, but one or more short links still returned 404 during automated checks. The issue remains open.\n\nUpdated paths:\n${paths}\n\nFailed URLs:\n${failedUrls || '- (none captured)'}`;
+              body = `Updated event links for **${slug}** and committed generated files, but one or more short links still returned 404 during automated checks. The issue remains open.\n\nUpdated paths:\n${paths}\n\nQR code links:\n${qrUrls || '- (none generated)'}\n\nFailed URLs:\n${failedUrls || '- (none captured)'}`;
             }
 
             await github.rest.issues.createComment({
