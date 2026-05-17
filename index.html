@@ -7,207 +7,561 @@
   <style>
     :root {
       --ink: #0f172a;
-      --muted: #475569;
-      --bg: #f8fafc;
+      --ink-soft: #1e293b;
+      --muted: #64748b;
+      --muted-light: #94a3b8;
+      --bg: #f1f5f9;
       --card: #ffffff;
-      --line: #dbe2ea;
-      --accent: #15803d;
+      --line: #e2e8f0;
+      --accent: #16a34a;
+      --accent-hover: #15803d;
+      --accent-light: #dcfce7;
+      --danger: #dc2626;
+      --danger-light: #fee2e2;
+      --warning: #d97706;
+      --warning-light: #fef3c7;
+      --info: #2563eb;
+      --info-light: #dbeafe;
+      --radius: 12px;
+      --radius-sm: 8px;
     }
-    * { box-sizing: border-box; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      margin: 0;
-      font-family: "Segoe UI", Arial, sans-serif;
+      font-family: "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
       color: var(--ink);
-      background: radial-gradient(circle at 10% 0%, #e0f2fe 0%, var(--bg) 45%);
+      background: var(--bg);
+      min-height: 100vh;
     }
-    main { max-width: 980px; margin: 0 auto; padding: 28px 18px 36px; }
-    h1 { margin: 0 0 8px; }
-    .lead { margin: 0 0 22px; color: var(--muted); }
+
+    /* ── Header ── */
+    header {
+      background: var(--ink);
+      color: #fff;
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      height: 58px;
+    }
+    header svg { flex-shrink: 0; }
+    header h1 { font-size: 17px; font-weight: 600; letter-spacing: -0.01em; }
+    header .tagline { font-size: 13px; color: #94a3b8; margin-top: 1px; }
+    header .spacer { flex: 1; }
+    header a.gh-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: #cbd5e1;
+      text-decoration: none;
+      padding: 6px 12px;
+      border-radius: var(--radius-sm);
+      border: 1px solid #334155;
+      transition: background 0.15s, color 0.15s;
+    }
+    header a.gh-link:hover { background: #1e293b; color: #fff; }
+
+    /* ── Layout ── */
+    main { max-width: 860px; margin: 0 auto; padding: 28px 18px 48px; }
+
+    /* ── Section labels ── */
+    .section-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+
+    /* ── Card ── */
     .card {
       background: var(--card);
       border: 1px solid var(--line);
-      border-radius: 14px;
-      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
-      padding: 16px;
-      margin-bottom: 16px;
+      border-radius: var(--radius);
+      box-shadow: 0 1px 4px rgba(15,23,42,0.06), 0 4px 16px rgba(15,23,42,0.04);
+      margin-bottom: 20px;
+      overflow: hidden;
     }
-    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    label { display: block; font-size: 14px; margin-bottom: 6px; color: var(--muted); }
-    input[type="text"], input[type="url"], textarea {
+    .card-header {
+      padding: 18px 22px 14px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+    }
+    .card-icon {
+      width: 38px; height: 38px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      font-size: 18px;
+    }
+    .card-icon.green { background: var(--accent-light); }
+    .card-icon.blue { background: var(--info-light); }
+    .card-icon.slate { background: #f1f5f9; }
+    .card-title { font-size: 15px; font-weight: 600; line-height: 1.3; }
+    .card-subtitle { font-size: 13px; color: var(--muted); margin-top: 2px; }
+    .card-body { padding: 20px 22px; }
+
+    /* ── Token section ── */
+    .token-row {
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
+    }
+    .token-row .field-wrap { flex: 1; }
+    .token-saved-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--accent);
+      background: var(--accent-light);
+      border-radius: 20px;
+      padding: 3px 10px;
+    }
+    .token-hint {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 6px;
+      line-height: 1.5;
+    }
+    .token-hint a { color: var(--info); }
+
+    /* ── Form fields ── */
+    .field-wrap { display: flex; flex-direction: column; gap: 5px; }
+    .field-label {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--ink-soft);
+    }
+    .field-label span.req { color: var(--danger); margin-left: 2px; }
+    .field-hint { font-size: 12px; color: var(--muted); }
+    input[type="text"], input[type="url"], input[type="password"], textarea, select {
       width: 100%;
-      border: 1px solid #cbd5e1;
-      border-radius: 10px;
-      padding: 10px 12px;
+      border: 1.5px solid var(--line);
+      border-radius: var(--radius-sm);
+      padding: 9px 12px;
       font-size: 14px;
+      font-family: inherit;
       background: #fff;
+      color: var(--ink);
+      transition: border-color 0.15s, box-shadow 0.15s;
+      outline: none;
     }
+    input:focus, textarea:focus, select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(22,163,74,0.12);
+    }
+    input.error, textarea.error { border-color: var(--danger); }
     textarea { resize: vertical; }
-    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
-    .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
-    button {
-      border: none;
-      border-radius: 10px;
-      padding: 10px 12px;
-      cursor: pointer;
-      background: #0f172a;
-      color: #fff;
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px !important; }
+
+    /* ── Grid ── */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .field-gap { display: flex; flex-direction: column; gap: 14px; }
+
+    /* ── Divider ── */
+    .or-divider {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--muted-light);
+      font-size: 12px;
+      font-weight: 500;
+      margin: 18px 0;
     }
-    button.secondary { background: #e2e8f0; color: #0f172a; }
-    button.success { background: var(--accent); }
-    .muted { color: var(--muted); }
-    ul { margin: 8px 0 0; }
-    @media (max-width: 900px) {
-      .grid { grid-template-columns: 1fr; }
+    .or-divider::before, .or-divider::after {
+      content: '';
+      flex: 1;
+      border-top: 1px solid var(--line);
+    }
+
+    /* ── Collapsible JSON section ── */
+    .json-toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--muted);
+      cursor: pointer;
+      user-select: none;
+      border: none;
+      background: none;
+      padding: 0;
+    }
+    .json-toggle:hover { color: var(--ink); }
+    .json-toggle-arrow { transition: transform 0.2s; font-size: 11px; }
+    .json-toggle.open .json-toggle-arrow { transform: rotate(90deg); }
+    .json-section { display: none; margin-top: 14px; }
+    .json-section.open { display: block; }
+
+    /* ── Action bar ── */
+    .action-bar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      padding: 16px 22px;
+      background: #f8fafc;
+      border-top: 1px solid var(--line);
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      border: none;
+      border-radius: var(--radius-sm);
+      padding: 9px 16px;
+      font-size: 14px;
+      font-weight: 500;
+      font-family: inherit;
+      cursor: pointer;
+      transition: background 0.15s, opacity 0.15s, box-shadow 0.15s;
+      white-space: nowrap;
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      box-shadow: 0 1px 3px rgba(22,163,74,0.3);
+    }
+    .btn-primary:hover:not(:disabled) { background: var(--accent-hover); box-shadow: 0 2px 6px rgba(22,163,74,0.4); }
+    .btn-secondary {
+      background: #fff;
+      color: var(--ink-soft);
+      border: 1.5px solid var(--line);
+    }
+    .btn-secondary:hover:not(:disabled) { background: #f1f5f9; }
+    .btn-ghost { background: transparent; color: var(--muted); padding: 9px 10px; }
+    .btn-ghost:hover { background: var(--line); color: var(--ink); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-spinner { display: none; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; }
+    .btn.loading .btn-spinner { display: block; }
+    .btn.loading .btn-label { opacity: 0.7; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Status banner ── */
+    .status-banner {
+      display: none;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 12px 16px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      line-height: 1.5;
+      margin-top: 16px;
+    }
+    .status-banner.show { display: flex; }
+    .status-banner.success { background: var(--accent-light); color: #14532d; border: 1px solid #bbf7d0; }
+    .status-banner.error { background: var(--danger-light); color: #7f1d1d; border: 1px solid #fecaca; }
+    .status-banner.info { background: var(--info-light); color: #1e3a8a; border: 1px solid #bfdbfe; }
+    .status-banner .status-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+    .status-banner .status-body { flex: 1; }
+    .status-banner a { color: inherit; font-weight: 600; }
+
+    /* ── Info panel ── */
+    .info-list { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+    .info-list li {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+      color: var(--ink-soft);
+    }
+    .info-list li .path {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 12px;
+      background: #f1f5f9;
+      border: 1px solid var(--line);
+      border-radius: 5px;
+      padding: 2px 7px;
+    }
+    .info-list li .dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      flex-shrink: 0;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 600px) {
+      .grid-2 { grid-template-columns: 1fr; }
+      .token-row { flex-direction: column; }
+      .card-header { flex-direction: column; gap: 10px; }
     }
   </style>
 </head>
 <body>
+
+  <header>
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <rect width="28" height="28" rx="7" fill="#16a34a"/>
+      <path d="M7 14a7 7 0 1 0 14 0A7 7 0 0 0 7 14Z" stroke="#fff" stroke-width="1.8" fill="none"/>
+      <circle cx="14" cy="14" r="2.5" fill="#fff"/>
+      <path d="M14 7v3M14 18v3M7 14h3M18 14h3" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/>
+    </svg>
+    <div>
+      <h1>RoboCup Links Admin</h1>
+      <div class="tagline">Manage redirect links &amp; trigger automation</div>
+    </div>
+    <div class="spacer"></div>
+    <a class="gh-link" href="https://github.com/margauxmedwards/robocuplinks/actions/workflows/apply-event-links-from-issue.yml" target="_blank" rel="noopener">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+      Workflow runs
+    </a>
+  </header>
+
   <main>
-    <h1>RoboCup Links Admin</h1>
-    <p class="lead">Single process only: submit one issue, update fixed links, keep the same QR codes.</p>
 
-    <section class="card">
-      <h2 style="margin:0 0 8px">Create Event Update Issue</h2>
-      <p class="muted" style="margin:0 0 12px">This builds a prefilled issue body for the automation workflow.</p>
-
-      <div class="grid">
+    <!-- ── GitHub Token ── -->
+    <p class="section-label">Authentication</p>
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon blue">🔑</div>
         <div>
-          <label for="issueEventSlug">Event slug</label>
-          <input id="issueEventSlug" type="text" placeholder="bne-2026" />
+          <div class="card-title">GitHub Personal Access Token</div>
+          <div class="card-subtitle">Used to create issues directly via the API. Stored only in your browser.</div>
         </div>
-        <div>
-          <label for="issueEventOverview">Event overview URL (optional)</label>
-          <input id="issueEventOverview" type="url" placeholder="https://example.com/event-overview" />
+        <div id="tokenBadge" style="display:none; margin-left:auto; align-self:center;">
+          <span class="token-saved-badge">✓ Token saved</span>
         </div>
       </div>
+      <div class="card-body">
+        <div class="token-row">
+          <div class="field-wrap">
+            <label class="field-label" for="ghToken">Personal Access Token</label>
+            <input id="ghToken" type="password" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocomplete="off" spellcheck="false" />
+          </div>
+          <button class="btn btn-secondary" id="saveToken" type="button">Save</button>
+          <button class="btn btn-ghost" id="clearToken" type="button" title="Clear saved token">✕</button>
+        </div>
+        <p class="token-hint">
+          Use a <strong>fine-grained token</strong> scoped to this repo with <strong>Issues: Read &amp; write</strong> only.
+          Stored in <code>sessionStorage</code> — cleared automatically when you close this tab.
+          <a href="https://github.com/settings/tokens?type=beta" target="_blank" rel="noopener">Create a fine-grained token ↗</a>
+        </p>
+      </div>
+    </div>
 
-      <div style="margin-top:10px">
-        <label for="issuePasteLinks">Links (Name: URL, one per line)</label>
-        <textarea id="issuePasteLinks" rows="7" class="mono" placeholder="Onstage: https://example.com/onstage
-Line: https://example.com/line
-Maze: https://example.com/maze
-Soccer: https://example.com/soccer
-Sumo: https://example.com/sumo"></textarea>
+    <!-- ── Create Event Issue ── -->
+    <p class="section-label" style="margin-top:24px">Create event</p>
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon green">🔗</div>
+        <div>
+          <div class="card-title">Submit Event Links</div>
+          <div class="card-subtitle">Creates a GitHub issue tagged <code>event-links</code>. The workflow picks it up and deploys automatically.</div>
+        </div>
       </div>
 
-      <div style="margin-top:10px">
-        <label for="issueJsonInput">Auto-fill from JSON (optional)</label>
-        <textarea id="issueJsonInput" rows="8" class="mono" placeholder='{"eventSlug":"bne-2026","eventOverview":"https://example.com/overview","links":{"Onstage":"https://example.com/onstage","Line":"https://example.com/line","Maze":"https://example.com/maze","Soccer":"https://example.com/soccer","Sumo":"https://example.com/sumo"}}'></textarea>
+      <div class="card-body field-gap">
+
+        <!-- Slug + Overview -->
+        <div class="grid-2">
+          <div class="field-wrap">
+            <label class="field-label" for="issueEventSlug">Event slug <span class="req">*</span></label>
+            <input id="issueEventSlug" type="text" placeholder="bne-2026" />
+            <span class="field-hint">e.g. bne-2026 → /r/bne-2026/</span>
+          </div>
+          <div class="field-wrap">
+            <label class="field-label" for="issueEventOverview">Event overview URL</label>
+            <input id="issueEventOverview" type="url" placeholder="https://example.com/event-overview" />
+            <span class="field-hint">Optional landing page for /r/&lt;slug&gt;</span>
+          </div>
+        </div>
+
+        <!-- Individual links -->
+        <div class="grid-2">
+          <div class="field-wrap">
+            <label class="field-label" for="linkLine">Line URL</label>
+            <input id="linkLine" type="url" placeholder="https://example.com/line" />
+          </div>
+          <div class="field-wrap">
+            <label class="field-label" for="linkMaze">Maze URL</label>
+            <input id="linkMaze" type="url" placeholder="https://example.com/maze" />
+          </div>
+          <div class="field-wrap">
+            <label class="field-label" for="linkOnstage">OnStage URL</label>
+            <input id="linkOnstage" type="url" placeholder="https://example.com/onstage" />
+          </div>
+          <div class="field-wrap">
+            <label class="field-label" for="linkSoccer">Soccer URL</label>
+            <input id="linkSoccer" type="url" placeholder="https://example.com/soccer" />
+          </div>
+          <div class="field-wrap">
+            <label class="field-label" for="linkSumo">Sumo URL</label>
+            <input id="linkSumo" type="url" placeholder="https://example.com/sumo" />
+          </div>
+        </div>
+
+        <!-- JSON import (collapsed) -->
+        <div>
+          <button class="json-toggle" id="jsonToggle" type="button">
+            <span class="json-toggle-arrow">▶</span>
+            Import from JSON
+          </button>
+          <div class="json-section" id="jsonSection">
+            <div class="field-wrap">
+              <label class="field-label" for="issueJsonInput">Paste event JSON</label>
+              <textarea id="issueJsonInput" rows="5" class="mono" placeholder='{"eventSlug":"bne-2026","eventOverview":"https://example.com","links":{"Line":"https://...","Maze":"https://...","Onstage":"https://...","Soccer":"https://...","Sumo":"https://..."}}'></textarea>
+            </div>
+            <button class="btn btn-secondary" id="fillFromJson" type="button" style="margin-top:10px">
+              ↑ Fill fields from JSON
+            </button>
+          </div>
+        </div>
+
+        <!-- Status banner -->
+        <div class="status-banner" id="statusBanner" role="status" aria-live="polite">
+          <span class="status-icon" id="statusIcon"></span>
+          <div class="status-body" id="statusBody"></div>
+        </div>
+
       </div>
 
-      <div class="actions">
-        <button id="fillFromJson" class="secondary" type="button">Fill fields from JSON</button>
-        <button id="openPrefilledIssue" class="success" type="button">Open prefilled form</button>
-        <a href="https://github.com/margauxmedwards/robocuplinks/actions/workflows/apply-event-links-from-issue.yml" target="_blank" rel="noopener"><button class="secondary" type="button">View workflow runs</button></a>
+      <div class="action-bar">
+        <button class="btn btn-primary" id="submitIssue" type="button">
+          <div class="btn-spinner"></div>
+          <span class="btn-label">Submit issue &amp; deploy</span>
+        </button>
+        <button class="btn btn-secondary" id="clearForm" type="button">Clear form</button>
       </div>
-    </section>
+    </div>
 
-    <section class="card">
-      <h2 style="margin:0 0 8px">Canonical Links</h2>
-      <p class="muted" style="margin:0">Each event overwrites these same paths:</p>
-      <ul>
-        <li>/r/index.html and /r/event.html</li>
-        <li>/r/line.html</li>
-        <li>/r/maze.html</li>
-        <li>/r/onstage.html</li>
-        <li>/r/soccer.html</li>
-        <li>/r/sumo.html</li>
-      </ul>
-    </section>
+    <!-- ── Canonical paths info ── -->
+    <p class="section-label" style="margin-top:24px">Canonical paths</p>
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon slate">📁</div>
+        <div>
+          <div class="card-title">Fixed redirect paths</div>
+          <div class="card-subtitle">Each event update overwrites these same files — QR codes stay the same.</div>
+        </div>
+      </div>
+      <div class="card-body">
+        <ul class="info-list">
+          <li><span class="dot"></span><span class="path">/r/index.html</span> and <span class="path">/r/event.html</span></li>
+          <li><span class="dot"></span><span class="path">/r/line.html</span></li>
+          <li><span class="dot"></span><span class="path">/r/maze.html</span></li>
+          <li><span class="dot"></span><span class="path">/r/onstage.html</span></li>
+          <li><span class="dot"></span><span class="path">/r/soccer.html</span></li>
+          <li><span class="dot"></span><span class="path">/r/sumo.html</span></li>
+        </ul>
+      </div>
+    </div>
+
   </main>
 
   <script>
-    var issueEventSlugEl = document.getElementById('issueEventSlug');
-    var issueEventOverviewEl = document.getElementById('issueEventOverview');
-    var issuePasteLinksEl = document.getElementById('issuePasteLinks');
-    var issueJsonInputEl = document.getElementById('issueJsonInput');
-
+    /* ── Helpers ── */
     function slugifySegment(input) {
-      return String(input || '')
-        .trim()
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-+|-+$/g, '');
+      return String(input || '').trim().toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
     }
-
     function titleCaseSlug(input) {
-      return String(input || '')
-        .split(/[-_\s]+/)
-        .filter(Boolean)
-        .map(function(part) { return part.charAt(0).toUpperCase() + part.slice(1); })
-        .join(' ');
+      return String(input || '').split(/[-_\s]+/).filter(Boolean)
+        .map(function(p){ return p.charAt(0).toUpperCase() + p.slice(1); }).join(' ');
     }
 
-    function fillIssueFormFromJson() {
-      var raw = (issueJsonInputEl.value || '').trim();
-      if (!raw) {
-        alert('Paste event JSON first.');
-        return;
-      }
+    /* ── Token management ── */
+    var TOKEN_KEY = 'rclinks_gh_token';
+    var ghTokenEl  = document.getElementById('ghToken');
+    var tokenBadge = document.getElementById('tokenBadge');
 
+    function loadToken() {
+      var t = sessionStorage.getItem(TOKEN_KEY) || '';
+      if (t) {
+        ghTokenEl.value = t;
+        tokenBadge.style.display = 'block';
+      }
+    }
+    function saveToken() {
+      var t = (ghTokenEl.value || '').trim();
+      if (!t) { alert('Enter a token first.'); return; }
+      sessionStorage.setItem(TOKEN_KEY, t);
+      tokenBadge.style.display = 'block';
+      showStatus('info', 'ℹ️', 'Token saved for this session.');
+    }
+    function clearToken() {
+      sessionStorage.removeItem(TOKEN_KEY);
+      ghTokenEl.value = '';
+      tokenBadge.style.display = 'none';
+      showStatus('info', 'ℹ️', 'Token cleared.');
+    }
+    document.getElementById('saveToken').onclick = saveToken;
+    document.getElementById('clearToken').onclick = clearToken;
+    loadToken();
+
+    /* ── JSON toggle ── */
+    document.getElementById('jsonToggle').onclick = function() {
+      this.classList.toggle('open');
+      document.getElementById('jsonSection').classList.toggle('open');
+    };
+
+    /* ── Fill from JSON ── */
+    document.getElementById('fillFromJson').onclick = function() {
+      var raw = (document.getElementById('issueJsonInput').value || '').trim();
+      if (!raw) { showStatus('error', '✕', 'Paste event JSON first.'); return; }
       var parsed;
-      try {
-        parsed = JSON.parse(raw);
-      } catch (err) {
-        alert('Event JSON is invalid.');
-        return;
-      }
-
+      try { parsed = JSON.parse(raw); }
+      catch(e) { showStatus('error', '✕', 'Invalid JSON — check the format and try again.'); return; }
       var slug = slugifySegment(parsed.eventSlug || parsed.slug || parsed.event || '');
-      if (!slug) {
-        alert('Event JSON needs eventSlug (or slug).');
-        return;
-      }
+      if (!slug) { showStatus('error', '✕', 'JSON must include eventSlug.'); return; }
+      var overview = String((parsed.eventOverview || parsed.eventUrl || '')).trim();
+      var links = parsed.links || {};
+      document.getElementById('issueEventSlug').value    = slug;
+      document.getElementById('issueEventOverview').value = overview;
+      document.getElementById('linkLine').value    = String(links.Line    || links.line    || '').trim();
+      document.getElementById('linkMaze').value    = String(links.Maze    || links.maze    || '').trim();
+      document.getElementById('linkOnstage').value = String(links.Onstage || links.onstage || links['OnStage'] || '').trim();
+      document.getElementById('linkSoccer').value  = String(links.Soccer  || links.soccer  || '').trim();
+      document.getElementById('linkSumo').value    = String(links.Sumo    || links.sumo    || '').trim();
+      showStatus('success', '✓', 'Fields populated from JSON.');
+    };
 
-      var overview = '';
-      if (parsed.eventOverview) overview = String(parsed.eventOverview).trim();
-      else if (parsed.eventUrl) overview = String(parsed.eventUrl).trim();
-
-      var linksObj = parsed.links;
-      if (!linksObj || typeof linksObj !== 'object' || Array.isArray(linksObj)) {
-        alert('Event JSON needs a links object.');
-        return;
-      }
-
-      var lines = [];
-      Object.keys(linksObj).forEach(function(key) {
-        var value = String(linksObj[key] || '').trim();
-        if (value) lines.push(titleCaseSlug(key) + ': ' + value);
-      });
-
-      issueEventSlugEl.value = slug;
-      issueEventOverviewEl.value = overview;
-      issuePasteLinksEl.value = lines.join('\n');
-      alert('Event fields filled from JSON.');
+    /* ── Status banner ── */
+    function showStatus(type, icon, html) {
+      var banner = document.getElementById('statusBanner');
+      var iconEl  = document.getElementById('statusIcon');
+      var bodyEl  = document.getElementById('statusBody');
+      banner.className = 'status-banner show ' + type;
+      iconEl.textContent = icon;
+      bodyEl.innerHTML   = html;
+    }
+    function hideStatus() {
+      document.getElementById('statusBanner').className = 'status-banner';
     }
 
-    function buildPrefilledIssueUrl() {
-      var params = new URLSearchParams();
-      var slug = slugifySegment(issueEventSlugEl.value);
-      var overview = issueEventOverviewEl.value.trim();
-      var pasteLinks = issuePasteLinksEl.value.trim();
-      var splitLinks = { line: '', maze: '', onstage: '', soccer: '', sumo: '' };
-      var unknownLinks = [];
+    /* ── Clear form ── */
+    document.getElementById('clearForm').onclick = function() {
+      ['issueEventSlug','issueEventOverview','linkLine','linkMaze','linkOnstage','linkSoccer','linkSumo','issueJsonInput']
+        .forEach(function(id){ document.getElementById(id).value = ''; });
+      hideStatus();
+    };
 
-      if (pasteLinks) {
-        var lines = pasteLinks.split(/\r?\n/);
-        for (var i = 0; i < lines.length; i++) {
-          var text = lines[i].trim();
-          if (!text || text.indexOf(':') < 0) continue;
-          var pair = text.split(':');
-          var name = slugifySegment(pair.shift() || '');
-          var url = pair.join(':').trim().replace(/^['\"]|['\"]$/g, '');
-          if (!name || !url) continue;
-          if (name === 'on-stage') name = 'onstage';
-          if (Object.prototype.hasOwnProperty.call(splitLinks, name)) splitLinks[name] = url;
-          else unknownLinks.push(name + ',' + url);
-        }
-      }
+    /* ── Build issue body (same format the workflow expects) ── */
+    function buildIssuePayload() {
+      var slug     = slugifySegment(document.getElementById('issueEventSlug').value);
+      var overview = (document.getElementById('issueEventOverview').value || '').trim();
+      var line     = (document.getElementById('linkLine').value    || '').trim();
+      var maze     = (document.getElementById('linkMaze').value    || '').trim();
+      var onstage  = (document.getElementById('linkOnstage').value || '').trim();
+      var soccer   = (document.getElementById('linkSoccer').value  || '').trim();
+      var sumo     = (document.getElementById('linkSumo').value    || '').trim();
 
-      if (slug) params.set('title', 'Event links: ' + slug);
-      params.set('labels', 'event-links');
+      /* Build paste-links block for the script */
+      var pasteLines = [];
+      if (line)    pasteLines.push('Line: '    + line);
+      if (maze)    pasteLines.push('Maze: '    + maze);
+      if (onstage) pasteLines.push('Onstage: ' + onstage);
+      if (soccer)  pasteLines.push('Soccer: '  + soccer);
+      if (sumo)    pasteLines.push('Sumo: '    + sumo);
+      var pasteLinks = pasteLines.join('\n') || '_No response_';
 
-      var bodyLines = [
+      var body = [
         '### Event slug',
         slug || '_No response_',
         '',
@@ -215,34 +569,82 @@ Sumo: https://example.com/sumo"></textarea>
         overview || '_No response_',
         '',
         '### Paste links (Name: URL)',
-        pasteLinks || '_No response_',
+        pasteLinks,
         '',
         '### Line URL',
-        splitLinks.line || '_No response_',
+        line || '_No response_',
         '',
         '### Maze URL',
-        splitLinks.maze || '_No response_',
+        maze || '_No response_',
         '',
         '### OnStage URL',
-        splitLinks.onstage || '_No response_',
+        onstage || '_No response_',
         '',
         '### Soccer URL',
-        splitLinks.soccer || '_No response_',
+        soccer || '_No response_',
         '',
         '### Sumo URL',
-        splitLinks.sumo || '_No response_',
+        sumo || '_No response_',
         '',
         '### Extra links',
-        unknownLinks.length ? unknownLinks.join('\n') : '_No response_'
-      ];
+        '_No response_'
+      ].join('\n');
 
-      params.set('body', bodyLines.join('\n'));
-      return 'https://github.com/margauxmedwards/robocuplinks/issues/new?' + params.toString();
+      return { title: 'Event links: ' + slug, body: body, labels: ['event-links'] };
     }
 
-    document.getElementById('fillFromJson').onclick = fillIssueFormFromJson;
-    document.getElementById('openPrefilledIssue').onclick = function() {
-      window.open(buildPrefilledIssueUrl(), '_blank', 'noopener');
+    /* ── Submit issue via GitHub API ── */
+    document.getElementById('submitIssue').onclick = async function() {
+      var btn  = this;
+      var slug = slugifySegment(document.getElementById('issueEventSlug').value);
+      if (!slug) {
+        showStatus('error', '✕', 'Event slug is required.');
+        document.getElementById('issueEventSlug').focus();
+        return;
+      }
+
+      var token = (sessionStorage.getItem(TOKEN_KEY) || ghTokenEl.value || '').trim();
+      if (!token) {
+        showStatus('error', '✕', 'A GitHub Personal Access Token is required. Enter and save one above.');
+        document.getElementById('ghToken').focus();
+        return;
+      }
+
+      btn.classList.add('loading');
+      btn.disabled = true;
+      showStatus('info', '⏳', 'Creating issue…');
+
+      var payload = buildIssuePayload();
+      var apiUrl  = 'https://api.github.com/repos/margauxmedwards/robocuplinks/issues';
+
+      try {
+        var resp = await fetch(apiUrl, {
+          method: 'POST',
+          headers: {
+            'Authorization': 'Bearer ' + token,
+            'Accept': 'application/vnd.github+json',
+            'Content-Type': 'application/json',
+            'X-GitHub-Api-Version': '2022-11-28'
+          },
+          body: JSON.stringify(payload)
+        });
+
+        var data = await resp.json();
+
+        if (!resp.ok) {
+          var msg = (data && data.message) ? data.message : 'HTTP ' + resp.status;
+          showStatus('error', '✕', 'GitHub API error: <strong>' + msg + '</strong>. Check your token has <code>repo</code> scope.');
+        } else {
+          showStatus('success', '✓',
+            'Issue <strong><a href="' + data.html_url + '" target="_blank" rel="noopener">#' + data.number + ' — ' + data.title + '</a></strong> created. The workflow will deploy shortly.'
+          );
+        }
+      } catch (err) {
+        showStatus('error', '✕', 'Network error: ' + err.message);
+      } finally {
+        btn.classList.remove('loading');
+        btn.disabled = false;
+      }
     };
   </script>
 </body>
