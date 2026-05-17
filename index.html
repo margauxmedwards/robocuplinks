@@ -129,6 +129,26 @@
       line-height: 1.5;
     }
     .token-hint a { color: var(--info); }
+    /* ── Setup toggle (collapsed by default) ── */
+    .setup-toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--muted);
+      cursor: pointer;
+      user-select: none;
+      border: none;
+      background: none;
+      padding: 0;
+      margin-bottom: 0;
+    }
+    .setup-toggle:hover { color: var(--ink); }
+    .setup-toggle-arrow { transition: transform 0.2s; font-size: 11px; }
+    .setup-toggle.open .setup-toggle-arrow { transform: rotate(90deg); }
+    .setup-section { display: none; margin-top: 14px; }
+    .setup-section.open { display: block; }
 
     /* ── Form fields ── */
     .field-wrap { display: flex; flex-direction: column; gap: 5px; }
@@ -308,7 +328,7 @@
       <div class="tagline">Manage redirect links &amp; trigger automation</div>
     </div>
     <div class="spacer"></div>
-    <a class="gh-link" href="https://github.com/margauxmedwards/robocuplinks/actions/workflows/apply-event-links-from-issue.yml" target="_blank" rel="noopener">
+    <a class="gh-link" href="https://github.com/margauxmedwards/robocuplinks/actions/workflows/dispatch-event-links.yml" target="_blank" rel="noopener">
       <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
       Workflow runs
     </a>
@@ -317,32 +337,31 @@
   <main>
 
     <!-- ── GitHub Token ── -->
-    <p class="section-label">Authentication</p>
+    <!-- ── Setup (dispatch token, collapsed) ── -->
+    <p class="section-label">Setup</p>
     <div class="card">
-      <div class="card-header">
-        <div class="card-icon blue">🔑</div>
-        <div>
-          <div class="card-title">GitHub Personal Access Token</div>
-          <div class="card-subtitle">Used to create issues directly via the API. Stored only in your browser.</div>
-        </div>
-        <div id="tokenBadge" style="display:none; margin-left:auto; align-self:center;">
-          <span class="token-saved-badge">✓ Token saved</span>
-        </div>
-      </div>
       <div class="card-body">
-        <div class="token-row">
-          <div class="field-wrap">
-            <label class="field-label" for="ghToken">Personal Access Token</label>
-            <input id="ghToken" type="password" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocomplete="off" spellcheck="false" />
+        <button class="setup-toggle" id="setupToggle" type="button">
+          <span class="setup-toggle-arrow">▶</span>
+          Dispatch token (one-time setup)
+          <span id="setupBadge" style="display:none; margin-left:6px;" class="token-saved-badge">✓ Saved</span>
+        </button>
+        <div class="setup-section" id="setupSection">
+          <p class="token-hint" style="margin-bottom:10px">
+            A fine-grained PAT with <strong>Actions: Read &amp; write</strong> on this repo only — nothing else.
+            This is used once to trigger the workflow; the actual git work uses the repo's built-in token.
+            Stored in <code>sessionStorage</code> (cleared when you close this tab).
+            <a href="https://github.com/settings/tokens?type=beta" target="_blank" rel="noopener">Create a fine-grained token ↗</a>
+          </p>
+          <div class="token-row">
+            <div class="field-wrap">
+              <label class="field-label" for="ghDispatchToken">Fine-grained Actions token</label>
+              <input id="ghDispatchToken" type="password" placeholder="github_pat_xxxxxxxxxxxx" autocomplete="off" spellcheck="false" />
+            </div>
+            <button class="btn btn-secondary" id="saveDispatchToken" type="button">Save</button>
+            <button class="btn btn-ghost" id="clearDispatchToken" type="button" title="Clear">✕</button>
           </div>
-          <button class="btn btn-secondary" id="saveToken" type="button">Save</button>
-          <button class="btn btn-ghost" id="clearToken" type="button" title="Clear saved token">✕</button>
         </div>
-        <p class="token-hint">
-          Use a <strong>fine-grained token</strong> scoped to this repo with <strong>Issues: Read &amp; write</strong> only.
-          Stored in <code>sessionStorage</code> — cleared automatically when you close this tab.
-          <a href="https://github.com/settings/tokens?type=beta" target="_blank" rel="noopener">Create a fine-grained token ↗</a>
-        </p>
       </div>
     </div>
 
@@ -353,7 +372,7 @@
         <div class="card-icon green">🔗</div>
         <div>
           <div class="card-title">Submit Event Links</div>
-          <div class="card-subtitle">Creates a GitHub issue tagged <code>event-links</code>. The workflow picks it up and deploys automatically.</div>
+          <div class="card-subtitle">Triggers the deployment workflow directly. Changes are deployed automatically — no GitHub tab needed.</div>
         </div>
       </div>
 
@@ -398,6 +417,14 @@
         </div>
 
         <!-- JSON import (collapsed) -->
+                <!-- Password -->
+                <div class="field-wrap">
+                  <label class="field-label" for="adminPassword">Admin password <span class="req">*</span></label>
+                  <input id="adminPassword" type="password" placeholder="Enter admin password" autocomplete="current-password" />
+                  <span class="field-hint">Verified server-side against <code>ADMIN_PASSWORD</code> secret — never stored.</span>
+                </div>
+
+                <!-- JSON import (collapsed) -->
         <div>
           <button class="json-toggle" id="jsonToggle" type="button">
             <span class="json-toggle-arrow">▶</span>
@@ -425,7 +452,7 @@
       <div class="action-bar">
         <button class="btn btn-primary" id="submitIssue" type="button">
           <div class="btn-spinner"></div>
-          <span class="btn-label">Submit issue &amp; deploy</span>
+          <span class="btn-label">Deploy event links</span>
         </button>
         <button class="btn btn-secondary" id="clearForm" type="button">Clear form</button>
       </div>
@@ -467,33 +494,38 @@
     }
 
     /* ── Token management ── */
-    var TOKEN_KEY = 'rclinks_gh_token';
-    var ghTokenEl  = document.getElementById('ghToken');
-    var tokenBadge = document.getElementById('tokenBadge');
+    /* ── Setup toggle ── */
+    document.getElementById('setupToggle').onclick = function() {
+      this.classList.toggle('open');
+      document.getElementById('setupSection').classList.toggle('open');
+    };
 
-    function loadToken() {
-      var t = sessionStorage.getItem(TOKEN_KEY) || '';
+    /* ── Dispatch token (one-time setup, sessionStorage) ── */
+    var DISPATCH_TOKEN_KEY = 'rclinks_dispatch_token';
+
+    function loadDispatchToken() {
+      var t = sessionStorage.getItem(DISPATCH_TOKEN_KEY) || '';
       if (t) {
-        ghTokenEl.value = t;
-        tokenBadge.style.display = 'block';
+        document.getElementById('ghDispatchToken').value = t;
+        document.getElementById('setupBadge').style.display = 'inline-flex';
       }
     }
-    function saveToken() {
-      var t = (ghTokenEl.value || '').trim();
-      if (!t) { alert('Enter a token first.'); return; }
-      sessionStorage.setItem(TOKEN_KEY, t);
-      tokenBadge.style.display = 'block';
-      showStatus('info', 'ℹ️', 'Token saved for this session.');
+    function saveDispatchToken() {
+      var t = (document.getElementById('ghDispatchToken').value || '').trim();
+      if (!t) { showStatus('error', '✕', 'Enter a dispatch token first.'); return; }
+      sessionStorage.setItem(DISPATCH_TOKEN_KEY, t);
+      document.getElementById('setupBadge').style.display = 'inline-flex';
+      showStatus('info', 'ℹ️', 'Dispatch token saved for this session.');
     }
-    function clearToken() {
-      sessionStorage.removeItem(TOKEN_KEY);
-      ghTokenEl.value = '';
-      tokenBadge.style.display = 'none';
-      showStatus('info', 'ℹ️', 'Token cleared.');
+    function clearDispatchToken() {
+      sessionStorage.removeItem(DISPATCH_TOKEN_KEY);
+      document.getElementById('ghDispatchToken').value = '';
+      document.getElementById('setupBadge').style.display = 'none';
+      showStatus('info', 'ℹ️', 'Dispatch token cleared.');
     }
-    document.getElementById('saveToken').onclick = saveToken;
-    document.getElementById('clearToken').onclick = clearToken;
-    loadToken();
+    document.getElementById('saveDispatchToken').onclick = saveDispatchToken;
+    document.getElementById('clearDispatchToken').onclick = clearDispatchToken;
+    loadDispatchToken();
 
     /* ── JSON toggle ── */
     document.getElementById('jsonToggle').onclick = function() {
@@ -537,107 +569,81 @@
 
     /* ── Clear form ── */
     document.getElementById('clearForm').onclick = function() {
-      ['issueEventSlug','issueEventOverview','linkLine','linkMaze','linkOnstage','linkSoccer','linkSumo','issueJsonInput']
+      ['issueEventSlug','issueEventOverview','linkLine','linkMaze','linkOnstage','linkSoccer','linkSumo','issueJsonInput','adminPassword']
         .forEach(function(id){ document.getElementById(id).value = ''; });
       hideStatus();
     };
 
     /* ── Build issue body (same format the workflow expects) ── */
-    function buildIssuePayload() {
-      var slug     = slugifySegment(document.getElementById('issueEventSlug').value);
-      var overview = (document.getElementById('issueEventOverview').value || '').trim();
-      var line     = (document.getElementById('linkLine').value    || '').trim();
-      var maze     = (document.getElementById('linkMaze').value    || '').trim();
-      var onstage  = (document.getElementById('linkOnstage').value || '').trim();
-      var soccer   = (document.getElementById('linkSoccer').value  || '').trim();
-      var sumo     = (document.getElementById('linkSumo').value    || '').trim();
-
-      /* Build paste-links block for the script */
-      var pasteLines = [];
-      if (line)    pasteLines.push('Line: '    + line);
-      if (maze)    pasteLines.push('Maze: '    + maze);
-      if (onstage) pasteLines.push('Onstage: ' + onstage);
-      if (soccer)  pasteLines.push('Soccer: '  + soccer);
-      if (sumo)    pasteLines.push('Sumo: '    + sumo);
-      var pasteLinks = pasteLines.join('\n') || '_No response_';
-
-      var body = [
-        '### Event slug',
-        slug || '_No response_',
-        '',
-        '### Event overview URL',
-        overview || '_No response_',
-        '',
-        '### Paste links (Name: URL)',
-        pasteLinks,
-        '',
-        '### Line URL',
-        line || '_No response_',
-        '',
-        '### Maze URL',
-        maze || '_No response_',
-        '',
-        '### OnStage URL',
-        onstage || '_No response_',
-        '',
-        '### Soccer URL',
-        soccer || '_No response_',
-        '',
-        '### Sumo URL',
-        sumo || '_No response_',
-        '',
-        '### Extra links',
-        '_No response_'
-      ].join('\n');
-
-      return { title: 'Event links: ' + slug, body: body, labels: ['event-links'] };
-    }
-
-    /* ── Submit issue via GitHub API ── */
+    /* ── Submit via workflow_dispatch ── */
     document.getElementById('submitIssue').onclick = async function() {
-      var btn  = this;
-      var slug = slugifySegment(document.getElementById('issueEventSlug').value);
+      var btn      = this;
+      var slug     = slugifySegment(document.getElementById('issueEventSlug').value);
+      var password = (document.getElementById('adminPassword').value || '').trim();
+
       if (!slug) {
         showStatus('error', '✕', 'Event slug is required.');
         document.getElementById('issueEventSlug').focus();
         return;
       }
+      if (!password) {
+        showStatus('error', '✕', 'Admin password is required.');
+        document.getElementById('adminPassword').focus();
+        return;
+      }
 
-      var token = (sessionStorage.getItem(TOKEN_KEY) || ghTokenEl.value || '').trim();
-      if (!token) {
-        showStatus('error', '✕', 'A GitHub Personal Access Token is required. Enter and save one above.');
-        document.getElementById('ghToken').focus();
+      var dispatchToken = (sessionStorage.getItem(DISPATCH_TOKEN_KEY) || '').trim();
+      if (!dispatchToken) {
+        showStatus('error', '✕', 'A dispatch token is required. Expand <strong>Setup</strong> above and save one first.');
+        document.getElementById('setupToggle').classList.add('open');
+        document.getElementById('setupSection').classList.add('open');
+        document.getElementById('ghDispatchToken').focus();
         return;
       }
 
       btn.classList.add('loading');
       btn.disabled = true;
-      showStatus('info', '⏳', 'Creating issue…');
+      showStatus('info', '⏳', 'Triggering deployment workflow…');
 
-      var payload = buildIssuePayload();
-      var apiUrl  = 'https://api.github.com/repos/margauxmedwards/robocuplinks/issues';
+      var apiUrl = 'https://api.github.com/repos/margauxmedwards/robocuplinks/actions/workflows/dispatch-event-links.yml/dispatches';
+
+      var inputs = {
+        password:       password,
+        event_slug:     slug,
+        event_overview: (document.getElementById('issueEventOverview').value || '').trim(),
+        line_url:       (document.getElementById('linkLine').value    || '').trim(),
+        maze_url:       (document.getElementById('linkMaze').value    || '').trim(),
+        onstage_url:    (document.getElementById('linkOnstage').value || '').trim(),
+        soccer_url:     (document.getElementById('linkSoccer').value  || '').trim(),
+        sumo_url:       (document.getElementById('linkSumo').value    || '').trim()
+      };
 
       try {
         var resp = await fetch(apiUrl, {
           method: 'POST',
           headers: {
-            'Authorization': 'Bearer ' + token,
+            'Authorization': 'Bearer ' + dispatchToken,
             'Accept': 'application/vnd.github+json',
             'Content-Type': 'application/json',
             'X-GitHub-Api-Version': '2022-11-28'
           },
-          body: JSON.stringify(payload)
+          body: JSON.stringify({ ref: 'main', inputs: inputs })
         });
 
-        var data = await resp.json();
-
-        if (!resp.ok) {
-          var msg = (data && data.message) ? data.message : 'HTTP ' + resp.status;
-          showStatus('error', '✕', 'GitHub API error: <strong>' + msg + '</strong>. Check your token has <code>repo</code> scope.');
-        } else {
+        if (resp.status === 204) {
+          document.getElementById('adminPassword').value = '';
           showStatus('success', '✓',
-            'Issue <strong><a href="' + data.html_url + '" target="_blank" rel="noopener">#' + data.number + ' — ' + data.title + '</a></strong> created. The workflow will deploy shortly.'
+            'Workflow triggered for <strong>' + slug + '</strong>. '
+            + '<a href="https://github.com/margauxmedwards/robocuplinks/actions/workflows/dispatch-event-links.yml" target="_blank" rel="noopener">Watch progress ↗</a>'
           );
+        } else {
+          var data = {};
+          try { data = await resp.json(); } catch(e) {}
+          var msg = (data && data.message) ? data.message : 'HTTP ' + resp.status;
+          if (resp.status === 401 || resp.status === 403) {
+            msg = 'Invalid or insufficient dispatch token. Ensure it has <strong>Actions: Read &amp; write</strong> scope.';
+          }
+          showStatus('error', '✕', 'GitHub API error: ' + msg);
         }
       } catch (err) {
         showStatus('error', '✕', 'Network error: ' + err.message);

@@ -1,0 +1,159 @@
+name: Dispatch Event Links
+
+on:
+  workflow_dispatch:
+    inputs:
+      password:
+        description: 'Admin password'
+        required: true
+        type: string
+      event_slug:
+        description: 'Event slug (e.g. bne-2026)'
+        required: true
+        type: string
+      event_overview:
+        description: 'Event overview URL (optional)'
+        required: false
+        type: string
+      line_url:
+        description: 'Line URL (optional)'
+        required: false
+        type: string
+      maze_url:
+        description: 'Maze URL (optional)'
+        required: false
+        type: string
+      onstage_url:
+        description: 'OnStage URL (optional)'
+        required: false
+        type: string
+      soccer_url:
+        description: 'Soccer URL (optional)'
+        required: false
+        type: string
+      sumo_url:
+        description: 'Sumo URL (optional)'
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  apply-event-links:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Verify admin password
+        run: |
+          if [ "${{ inputs.password }}" != "${{ secrets.ADMIN_PASSWORD }}" ]; then
+            echo "::error::Invalid admin password — submission rejected."
+            exit 1
+          fi
+
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Pixi
+        uses: prefix-dev/setup-pixi@v0.8.3
+        with:
+          pixi-version: v0.42.1
+          cache: false
+
+      - name: Build issue body
+        run: |
+          SLUG="${{ inputs.event_slug }}"
+          OVERVIEW="${{ inputs.event_overview }}"
+          LINE="${{ inputs.line_url }}"
+          MAZE="${{ inputs.maze_url }}"
+          ONSTAGE="${{ inputs.onstage_url }}"
+          SOCCER="${{ inputs.soccer_url }}"
+          SUMO="${{ inputs.sumo_url }}"
+
+          PASTE=""
+          [ -n "$LINE" ]    && PASTE+="Line: $LINE"$'\n'
+          [ -n "$MAZE" ]    && PASTE+="Maze: $MAZE"$'\n'
+          [ -n "$ONSTAGE" ] && PASTE+="Onstage: $ONSTAGE"$'\n'
+          [ -n "$SOCCER" ]  && PASTE+="Soccer: $SOCCER"$'\n'
+          [ -n "$SUMO" ]    && PASTE+="Sumo: $SUMO"$'\n'
+          PASTE="${PASTE%$'\n'}"
+
+          python3 - <<PYEOF
+          import os, textwrap
+
+          slug     = os.environ.get('SLUG',    '') or '_No response_'
+          overview = os.environ.get('OVERVIEW','') or '_No response_'
+          paste    = os.environ.get('PASTE',   '') or '_No response_'
+          line     = os.environ.get('LINE',    '') or '_No response_'
+          maze     = os.environ.get('MAZE',    '') or '_No response_'
+          onstage  = os.environ.get('ONSTAGE', '') or '_No response_'
+          soccer   = os.environ.get('SOCCER',  '') or '_No response_'
+          sumo     = os.environ.get('SUMO',    '') or '_No response_'
+
+          body = f"""### Event slug
+          {slug}
+
+          ### Event overview URL
+          {overview}
+
+          ### Paste links (Name: URL)
+          {paste}
+
+          ### Line URL
+          {line}
+
+          ### Maze URL
+          {maze}
+
+          ### OnStage URL
+          {onstage}
+
+          ### Soccer URL
+          {soccer}
+
+          ### Sumo URL
+          {sumo}
+
+          ### Extra links
+          _No response_"""
+
+          with open('issue-body.md', 'w') as f:
+              f.write(textwrap.dedent(body).lstrip())
+          PYEOF
+        env:
+          SLUG: ${{ inputs.event_slug }}
+          OVERVIEW: ${{ inputs.event_overview }}
+          PASTE: ""
+          LINE: ${{ inputs.line_url }}
+          MAZE: ${{ inputs.maze_url }}
+          ONSTAGE: ${{ inputs.onstage_url }}
+          SOCCER: ${{ inputs.soccer_url }}
+          SUMO: ${{ inputs.sumo_url }}
+
+      - name: Apply event links to redirects.json
+        id: apply
+        run: |
+          OUTPUT=$(pixi run python scripts/apply_event_from_issue.py --issue-body issue-body.md --redirects redirects.json)
+          echo "$OUTPUT"
+          while IFS='=' read -r key value; do
+            if [ -n "$key" ]; then
+              echo "$key=$value" >> "$GITHUB_OUTPUT"
+            fi
+          done <<< "$OUTPUT"
+
+      - name: Regenerate redirect HTML files
+        run: pixi run update-redirects
+
+      - name: Commit and push
+        run: |
+          if git diff --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A redirects.json r qr
+          git commit -m "chore: update links for ${{ inputs.event_slug }}"
+          git push
