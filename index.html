@@ -349,6 +349,13 @@
           </div>
         </div>
 
+        <!-- Extra links -->
+        <div class="field-wrap">
+          <label class="field-label" for="linkExtra">Extra links</label>
+          <textarea id="linkExtra" rows="3" class="mono" placeholder="Mentors,https://example.com/mentors&#10;InfoPack,https://example.com/infopack"></textarea>
+          <span class="field-hint">One per line: <code>SlugName,https://url</code> — each becomes <code>/r/&lt;slug&gt;.html</code></span>
+        </div>
+
         <!-- JSON import (collapsed) -->
         <div>
           <button class="json-toggle" id="jsonToggle" type="button">
@@ -358,7 +365,7 @@
           <div class="json-section" id="jsonSection">
             <div class="field-wrap">
               <label class="field-label" for="issueJsonInput">Paste event JSON</label>
-              <textarea id="issueJsonInput" rows="5" class="mono" placeholder='{"eventSlug":"bne-2026","eventOverview":"https://example.com","links":{"Line":"https://...","Maze":"https://...","Onstage":"https://...","Soccer":"https://...","Sumo":"https://..."}}'></textarea>
+              <textarea id="issueJsonInput" rows="6" class="mono" placeholder='{"eventSlug":"bne-2026","eventOverview":"https://example.com","links":{"Line":"https://...","Maze":"https://...","Onstage":"https://...","Soccer":"https://...","Sumo":"https://..."},"extraLinks":{"Mentors":"https://...","InfoPack":"https://..."}}''></textarea>
             </div>
             <button class="btn btn-secondary" id="fillFromJson" type="button" style="margin-top:10px">
               ↑ Fill fields from JSON
@@ -467,6 +474,11 @@
       document.getElementById('linkOnstage').value = String(links.Onstage || links.onstage || links['OnStage'] || '').trim();
       document.getElementById('linkSoccer').value  = String(links.Soccer  || links.soccer  || '').trim();
       document.getElementById('linkSumo').value    = String(links.Sumo    || links.sumo    || '').trim();
+      var extraLinks = parsed.extraLinks || {};
+      var extraLines = Object.keys(extraLinks).map(function(name) {
+        return name + ',' + String(extraLinks[name]).trim();
+      });
+      document.getElementById('linkExtra').value = extraLines.join('\n');
       showStatus('success', '✓', 'Fields populated from JSON.');
     };
 
@@ -485,7 +497,7 @@
 
     /* ── Clear form ── */
     document.getElementById('clearForm').onclick = function() {
-      ['issueEventSlug','issueEventOverview','linkLine','linkMaze','linkOnstage','linkSoccer','linkSumo','issueJsonInput','adminPassword']
+      ['issueEventSlug','issueEventOverview','linkLine','linkMaze','linkOnstage','linkSoccer','linkSumo','linkExtra','issueJsonInput','adminPassword']
         .forEach(function(id){ document.getElementById(id).value = ''; });
       document.getElementById('submitIssue').disabled = true;
       document.getElementById('adminPassword').disabled = false;
@@ -529,6 +541,7 @@
       var onstageUrl = (document.getElementById('linkOnstage').value || '').trim();
       var soccerUrl = (document.getElementById('linkSoccer').value || '').trim();
       var sumoUrl = (document.getElementById('linkSumo').value || '').trim();
+      var extraRaw = (document.getElementById('linkExtra').value || '').trim();
 
       if (!slug) {
         showStatus('error', '✕', 'Event slug is required.');
@@ -557,7 +570,7 @@
         '### OnStage URL', fallback(onstageUrl), '',
         '### Soccer URL', fallback(soccerUrl), '',
         '### Sumo URL', fallback(sumoUrl), '',
-        '### Extra links', '_No response_'
+        '### Extra links', extraRaw || '_No response_'
       ].join('\n');
 
       var params = new URLSearchParams({
