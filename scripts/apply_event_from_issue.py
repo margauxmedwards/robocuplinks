@@ -57,7 +57,8 @@ def extract_field(body: str, label: str) -> str:
     if not match:
         return ""
     value = match.group(1).strip()
-    if value == "_No response_":
+    normalized = value.strip().lower()
+    if normalized in {"_no response_", "no response", "_no response", "no response_"}:
         return ""
     return value
 

@@ -80,7 +80,6 @@ Sumo: https://example.com/sumo"></textarea>
           <textarea id="issueJsonInput" rows="8" class="mono" placeholder='{"eventSlug":"qld-2026","eventOverview":"https://example.com/overview","links":{"Onstage":"https://example.com/onstage","Line":"https://example.com/line","Maze":"https://example.com/maze","Soccer":"https://example.com/soccer","Sumo":"https://example.com/sumo"}}'></textarea>
         </div>
         <div class="admin-actions">
-          <a href="https://github.com/margauxmedwards/robocuplinks/issues/new?template=new-event-links.yml" target="_blank" rel="noopener"><button class="success" type="button">Open event update form</button></a>
           <button id="fillFromJson" class="secondary" type="button">Fill fields from JSON</button>
           <button id="openPrefilledIssue" class="success" type="button">Open prefilled form</button>
           <a href="https://github.com/margauxmedwards/robocuplinks/actions/workflows/apply-event-links-from-issue.yml" target="_blank" rel="noopener"><button class="secondary" type="button">View workflow runs</button></a>
@@ -331,6 +330,33 @@ r/onstage"></textarea>
       var slug = slugifySegment(issueEventSlugEl ? issueEventSlugEl.value : '');
       var overview = issueEventOverviewEl ? issueEventOverviewEl.value.trim() : '';
       var pasteLinks = issuePasteLinksEl ? issuePasteLinksEl.value.trim() : '';
+      var splitLinks = {
+        line: '',
+        maze: '',
+        onstage: '',
+        soccer: '',
+        sumo: ''
+      };
+      var unknownLinks = [];
+
+      if(pasteLinks){
+        var lines = pasteLinks.split(/\r?\n/);
+        for(var i=0;i<lines.length;i++){
+          var text = lines[i].trim();
+          if(!text) continue;
+          if(text.indexOf(':') < 0) continue;
+          var pair = text.split(':');
+          var name = slugifySegment(pair.shift() || '');
+          var url = pair.join(':').trim().replace(/^['\"]|['\"]$/g, '');
+          if(!name || !url) continue;
+          if(name === 'on-stage'){ name = 'onstage'; }
+          if(splitLinks.hasOwnProperty(name)){
+            splitLinks[name] = url;
+          } else {
+            unknownLinks.push(name + ',' + url);
+          }
+        }
+      }
 
       if(slug){
         params.set('title', 'Event links: ' + slug);
@@ -348,22 +374,22 @@ r/onstage"></textarea>
         pasteLinks || '_No response_',
         '',
         '### Line URL',
-        '_No response_',
+        splitLinks.line || '_No response_',
         '',
         '### Maze URL',
-        '_No response_',
+        splitLinks.maze || '_No response_',
         '',
         '### OnStage URL',
-        '_No response_',
+        splitLinks.onstage || '_No response_',
         '',
         '### Soccer URL',
-        '_No response_',
+        splitLinks.soccer || '_No response_',
         '',
         '### Sumo URL',
-        '_No response_',
+        splitLinks.sumo || '_No response_',
         '',
         '### Extra links',
-        '_No response_'
+        unknownLinks.length ? unknownLinks.join('\n') : '_No response_'
       ];
       params.set('body', bodyLines.join('\n'));
 
