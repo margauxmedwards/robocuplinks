@@ -28,6 +28,21 @@
     .hint{font-size:12px;color:var(--muted)}
     .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
     .small{font-size:12px}
+    .event-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .result-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-top:12px}
+    .result-card{border:1px solid var(--line);border-radius:12px;padding:12px;background:#f8fafc}
+    .result-card h4{margin:0 0 6px;font-size:15px}
+    .result-card img,.result-card canvas{display:block;margin:10px auto 0;max-width:100%;height:auto}
+    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+    .admin-card{background:linear-gradient(130deg,#ecfeff,#f0fdf4);border:1px solid #bae6fd}
+    .admin-card h3{margin:0 0 8px}
+    .admin-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+    .admin-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+    .admin-json{margin-top:10px}
+    .pill{display:inline-block;padding:4px 8px;border-radius:999px;background:#0f172a;color:#fff;font-size:12px}
+    @media (max-width: 900px){
+      .row,.event-grid,.admin-grid{grid-template-columns:1fr}
+    }
   </style>
 </head>
 <body>
@@ -37,6 +52,42 @@
   </header>
 
   <div class="wrap">
+    <section class="card admin-card">
+      <div class="inner">
+        <span class="pill">Recommended</span>
+        <h3>One-step event updates</h3>
+        <p class="muted" style="margin:0">Use the GitHub form to submit a new event once. The workflow updates <code>redirects.json</code>, regenerates redirect files, generates static QR image files, and commits automatically.</p>
+        <div class="admin-grid">
+          <div>
+            <label for="issueEventSlug">Event slug</label>
+            <input id="issueEventSlug" type="text" placeholder="qld-2026" />
+          </div>
+          <div>
+            <label for="issueEventOverview">Event overview URL (optional)</label>
+            <input id="issueEventOverview" type="url" placeholder="https://example.com/event-overview" />
+          </div>
+        </div>
+        <div style="margin-top:10px">
+          <label for="issuePasteLinks">Prefill links (Name: URL, one per line)</label>
+          <textarea id="issuePasteLinks" rows="6" class="mono" placeholder="Onstage: https://example.com/onstage
+Line: https://example.com/line
+Maze: https://example.com/maze
+Soccer: https://example.com/soccer
+Sumo: https://example.com/sumo"></textarea>
+        </div>
+        <div class="admin-json">
+          <label for="issueJsonInput">Auto-fill from JSON (optional)</label>
+          <textarea id="issueJsonInput" rows="8" class="mono" placeholder='{"eventSlug":"qld-2026","eventOverview":"https://example.com/overview","links":{"Onstage":"https://example.com/onstage","Line":"https://example.com/line","Maze":"https://example.com/maze","Soccer":"https://example.com/soccer","Sumo":"https://example.com/sumo"}}'></textarea>
+        </div>
+        <div class="admin-actions">
+          <a href="https://github.com/margauxmedwards/robocuplinks/issues/new?template=new-event-links.yml" target="_blank" rel="noopener"><button class="success" type="button">Open event update form</button></a>
+          <button id="fillFromJson" class="secondary" type="button">Fill fields from JSON</button>
+          <button id="openPrefilledIssue" class="success" type="button">Open prefilled form</button>
+          <a href="https://github.com/margauxmedwards/robocuplinks/actions/workflows/apply-event-links-from-issue.yml" target="_blank" rel="noopener"><button class="secondary" type="button">View workflow runs</button></a>
+        </div>
+      </div>
+    </section>
+
     <!-- VIEWER -->
     <section class="card">
       <div class="inner">
@@ -129,6 +180,32 @@ r/onstage"></textarea>
         </details>
       </div>
     </section>
+
+    <section class="card">
+      <div class="inner">
+        <h3 style="margin:0 0 8px">Event pack builder</h3>
+        <p class="hint" style="margin-top:0">Define one event in a single JSON block, then generate all redirect files plus a printable QR sign for that event.</p>
+        <div class="event-grid">
+          <div>
+            <label for="eventConfig">Event JSON</label>
+            <textarea id="eventConfig" rows="16" class="mono" spellcheck="false"></textarea>
+            <div class="btns">
+              <button id="loadEventExample" class="secondary">Load example</button>
+              <button id="buildEventPack" class="success">Download event pack ZIP</button>
+            </div>
+          </div>
+          <div>
+            <label for="eventSummary">Generated short links</label>
+            <textarea id="eventSummary" rows="16" readonly class="mono"></textarea>
+            <div style="margin-top:10px">
+              <label>Event notes</label>
+              <div id="eventPlacementHint" class="small muted"></div>
+            </div>
+          </div>
+        </div>
+        <div id="eventResults" class="result-grid"></div>
+      </div>
+    </section>
   </div>
 
   <!-- QR + ZIP libs -->
@@ -146,9 +223,28 @@ r/onstage"></textarea>
     var placementHintEl = document.getElementById('placementHint');
     var redirectCodeEl = document.getElementById('redirectCode');
     var qrWrap = document.getElementById('qrcode');
+    var eventConfigEl = document.getElementById('eventConfig');
+    var eventSummaryEl = document.getElementById('eventSummary');
+    var eventPlacementHintEl = document.getElementById('eventPlacementHint');
+    var eventResultsEl = document.getElementById('eventResults');
+    var issueEventSlugEl = document.getElementById('issueEventSlug');
+    var issueEventOverviewEl = document.getElementById('issueEventOverview');
+    var issuePasteLinksEl = document.getElementById('issuePasteLinks');
+    var issueJsonInputEl = document.getElementById('issueJsonInput');
 
     var qrcode = null;
     var LS_KEY = 'shortlink_base_url_v1';
+    var EVENT_EXAMPLE = {
+      eventSlug: 'qld-2026',
+      eventName: 'QLD State 2026',
+      eventUrl: 'https://example.com/qld-2026-overview',
+      links: {
+        onstage: 'https://drive.google.com/example-onstage',
+        maze: 'https://drive.google.com/example-maze',
+        line: 'https://drive.google.com/example-line',
+        soccer: 'https://drive.google.com/example-soccer'
+      }
+    };
 
     // Link helpers
     function cleanLink(input){
@@ -213,6 +309,223 @@ r/onstage"></textarea>
       }
     }
 
+    function slugifySegment(input){
+      return String(input || '')
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+    }
+
+    function titleCaseSlug(input){
+      return String(input || '')
+        .split(/[-_\s]+/)
+        .filter(Boolean)
+        .map(function(part){ return part.charAt(0).toUpperCase() + part.slice(1); })
+        .join(' ');
+    }
+
+    function buildPrefilledIssueUrl(){
+      var params = new URLSearchParams();
+      params.set('template', 'new-event-links.yml');
+
+      var slug = slugifySegment(issueEventSlugEl ? issueEventSlugEl.value : '');
+      var overview = issueEventOverviewEl ? issueEventOverviewEl.value.trim() : '';
+      var pasteLinks = issuePasteLinksEl ? issuePasteLinksEl.value.trim() : '';
+
+      if(slug){
+        params.set('title', 'Event links: ' + slug);
+        params.set('event_slug', slug);
+      }
+      if(overview){ params.set('event_overview', overview); }
+      if(pasteLinks){ params.set('paste_links', pasteLinks); }
+
+      return 'https://github.com/margauxmedwards/robocuplinks/issues/new?' + params.toString();
+    }
+
+    function fillIssueFormFromJson(){
+      if(!issueJsonInputEl){ return; }
+      var raw = (issueJsonInputEl.value || '').trim();
+      if(!raw){ alert('Paste event JSON first.'); return; }
+
+      var parsed;
+      try{
+        parsed = JSON.parse(raw);
+      }catch(err){
+        alert('Event JSON is invalid.');
+        return;
+      }
+
+      var slug = slugifySegment(parsed.eventSlug || parsed.slug || parsed.event || '');
+      if(!slug){
+        alert('Event JSON needs eventSlug (or slug).');
+        return;
+      }
+
+      var overview = '';
+      if(parsed.eventOverview){ overview = String(parsed.eventOverview).trim(); }
+      else if(parsed.eventUrl){ overview = String(parsed.eventUrl).trim(); }
+
+      var linksObj = parsed.links;
+      if(!linksObj || typeof linksObj !== 'object' || Array.isArray(linksObj)){
+        alert('Event JSON needs a links object.');
+        return;
+      }
+
+      var lines = [];
+      Object.keys(linksObj).forEach(function(key){
+        var value = String(linksObj[key] || '').trim();
+        if(value){ lines.push(titleCaseSlug(key) + ': ' + value); }
+      });
+
+      if(issueEventSlugEl){ issueEventSlugEl.value = slug; }
+      if(issueEventOverviewEl){ issueEventOverviewEl.value = overview; }
+      if(issuePasteLinksEl){ issuePasteLinksEl.value = lines.join('\n'); }
+      alert('Event fields filled from JSON.');
+    }
+
+    function parseEventConfig(){
+      var raw = (eventConfigEl.value || '').trim();
+      if(!raw){ throw new Error('Add event JSON first.'); }
+      var parsed;
+      try {
+        parsed = JSON.parse(raw);
+      } catch(err) {
+        throw new Error('Event JSON is invalid.');
+      }
+      var eventSlug = slugifySegment(parsed.eventSlug || parsed.slug);
+      if(!eventSlug){ throw new Error('Event JSON needs eventSlug.'); }
+      var eventName = String(parsed.eventName || parsed.name || eventSlug).trim();
+      var eventUrl = parsed.eventUrl ? cleanLink(parsed.eventUrl) : null;
+      if(parsed.eventUrl && !eventUrl){ throw new Error('eventUrl must be a valid URL.'); }
+      var links = parsed.links;
+      if(!links || typeof links !== 'object' || Array.isArray(links)){
+        throw new Error('Event JSON needs a links object.');
+      }
+      var normalizedLinks = [];
+      Object.keys(links).forEach(function(key){
+        var slug = slugifySegment(key);
+        var url = cleanLink(links[key]);
+        if(!slug || !url) return;
+        normalizedLinks.push({ slug: slug, label: titleCaseSlug(key), url: url });
+      });
+      if(normalizedLinks.length === 0){ throw new Error('Add at least one valid link in links.'); }
+      return {
+        eventSlug: eventSlug,
+        eventName: eventName,
+        eventUrl: eventUrl,
+        links: normalizedLinks
+      };
+    }
+
+    function buildEventEntries(config, base, pretty){
+      var eventBasePath = 'r/' + config.eventSlug;
+      var entries = [];
+      if(config.eventUrl){
+        entries.push({
+          label: config.eventName,
+          path: eventBasePath,
+          targetUrl: config.eventUrl,
+          shortUrl: composeShortUrl(base, eventBasePath, pretty)
+        });
+      }
+      for(var i=0;i<config.links.length;i++){
+        var link = config.links[i];
+        var path = eventBasePath + '/' + link.slug;
+        entries.push({
+          label: link.label,
+          path: path,
+          targetUrl: link.url,
+          shortUrl: composeShortUrl(base, path, pretty)
+        });
+      }
+      return entries;
+    }
+
+    function zipPathForShortPath(path, pretty){
+      var clean = String(path || '').replace(/^\//, '').replace(/\/$/, '');
+      if(pretty){
+        return clean + '/index.html';
+      }
+      return /\.html$/i.test(clean) ? clean : clean + '.html';
+    }
+
+    function renderEventSummary(config, entries, base, pretty){
+      var lines = [config.eventName + ' (' + config.eventSlug + ')', ''];
+      if(config.eventUrl){
+        lines.push('Event overview -> ' + composeShortUrl(base, 'r/' + config.eventSlug, pretty));
+      }
+      for(var i=0;i<entries.length;i++){
+        lines.push(entries[i].label + ' -> ' + entries[i].shortUrl);
+      }
+      eventSummaryEl.value = lines.join('\n');
+    }
+
+    function qrImageMarkup(url, size){
+      var px = size || 240;
+      return 'https://api.qrserver.com/v1/create-qr-code/?size=' + px + 'x' + px + '&data=' + encodeURIComponent(url);
+    }
+
+    function renderEventResults(entries){
+      eventResultsEl.innerHTML = '';
+      for(var i=0;i<entries.length;i++){
+        var item = entries[i];
+        var card = document.createElement('article');
+        card.className = 'result-card';
+        var title = document.createElement('h4');
+        title.textContent = item.label;
+        var path = document.createElement('div');
+        path.className = 'small muted mono';
+        path.textContent = item.shortUrl;
+        var img = document.createElement('img');
+        img.alt = item.label + ' QR';
+        img.width = 180;
+        img.height = 180;
+        img.src = qrImageMarkup(item.shortUrl, 180);
+        card.appendChild(title);
+        card.appendChild(path);
+        card.appendChild(img);
+        eventResultsEl.appendChild(card);
+      }
+    }
+
+    function buildEventSheetHTML(config, entries){
+      var cards = entries.map(function(entry){
+        return "<article class='card'><h2>" + entry.label.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') + "</h2><img src='" + qrImageMarkup(entry.shortUrl, 260) + "' alt='QR for " + entry.label.replace(/'/g,'&#39;') + "'><p>" + entry.shortUrl.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') + "</p></article>";
+      }).join('');
+      return "<!doctype html><html lang='en'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width, initial-scale=1'><title>" + config.eventName.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') + " QR Sheet</title><style>:root{--ink:#0f172a;--muted:#475569;--line:#cbd5e1;--bg:#f8fafc}*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;color:var(--ink);background:var(--bg)}main{padding:24px;max-width:1100px;margin:0 auto}h1{margin:0 0 8px}p.lead{margin:0 0 20px;color:var(--muted)}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}.card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:16px;text-align:center;break-inside:avoid}.card h2{margin:0 0 12px;font-size:22px}.card img{width:100%;max-width:260px;height:auto;display:block;margin:0 auto 12px}.card p{margin:0;font-size:13px;word-break:break-word}@media print{body{background:#fff}.card{page-break-inside:avoid}}</style></head><body><main><h1>" + config.eventName.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') + "</h1><p class='lead'>Print this page as a single sign for the event. Each QR points to a hosted short link.</p><section class='grid'>" + cards + "</section></main></body></html>";
+    }
+
+    function buildEventPack(){
+      var base = baseUrlEl.value;
+      var pretty = !!prettyEl.checked;
+      if(!cleanLink(base)){
+        alert('Enter a valid host base URL first.');
+        return;
+      }
+      var config;
+      try {
+        config = parseEventConfig();
+      } catch(err) {
+        alert(err.message);
+        return;
+      }
+      var entries = buildEventEntries(config, base, pretty);
+      renderEventSummary(config, entries, base, pretty);
+      renderEventResults(entries);
+      eventPlacementHintEl.textContent = 'ZIP will include redirect files under ' + config.eventSlug + ' and a printable qr-sheet.html file.';
+
+      var zip = new JSZip();
+      for(var i=0;i<entries.length;i++){
+        var entry = entries[i];
+        zip.file(zipPathForShortPath(entry.path, pretty), generateRedirectHTML(entry.targetUrl));
+      }
+      zip.file(config.eventSlug + '/qr-sheet.html', buildEventSheetHTML(config, entries));
+      zip.generateAsync({type:'blob'}).then(function(content){
+        saveBlob(config.eventSlug + '-event-pack.zip', content);
+      });
+    }
+
     function buildAndShow(shortPath){
       var src = cleanLink(srcInput.value.trim());
       if(!src){ alert('Enter a valid link first.'); return; }
@@ -254,9 +567,29 @@ r/onstage"></textarea>
       buildAndShow(shortPathEl.value);
     };
 
+    document.getElementById('loadEventExample').onclick = function(){
+      eventConfigEl.value = JSON.stringify(EVENT_EXAMPLE, null, 2);
+    };
+
+    document.getElementById('buildEventPack').onclick = function(){
+      buildEventPack();
+    };
+
     var openShortBtn = document.getElementById('openShort');
     if(openShortBtn){
       openShortBtn.onclick = function(){ var u = shortLinkInput.value.trim(); if(u) window.open(u, '_blank', 'noopener'); };
+    }
+
+    var openPrefilledIssueBtn = document.getElementById('openPrefilledIssue');
+    if(openPrefilledIssueBtn){
+      openPrefilledIssueBtn.onclick = function(){
+        window.open(buildPrefilledIssueUrl(), '_blank', 'noopener');
+      };
+    }
+
+    var fillFromJsonBtn = document.getElementById('fillFromJson');
+    if(fillFromJsonBtn){
+      fillFromJsonBtn.onclick = function(){ fillIssueFormFromJson(); };
     }
 
     // Quick buttons
@@ -333,6 +666,7 @@ r/onstage"></textarea>
       // Pretty URL override
       var prettyParam = p.get('pretty');
       if(prettyParam !== null){ prettyEl.checked = (prettyParam === '1' || prettyParam === 'true'); }
+      eventConfigEl.value = JSON.stringify(EVENT_EXAMPLE, null, 2);
     })();
   </script>
 </body>
