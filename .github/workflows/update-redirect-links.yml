@@ -26,7 +26,7 @@ jobs:
         uses: prefix-dev/setup-pixi@v0.8.3
         with:
           pixi-version: v0.42.1
-          cache: true
+          cache: false
 
       - name: Generate redirect files
         run: pixi run update-redirects
